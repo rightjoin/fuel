@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/rightjoin/txt"
+	"github.com/rightjoin/utila/txt"
 )
 
 const defaultPort = 8421
