@@ -115,7 +115,7 @@ func (s *Server) loadEndpoints() {
 				// if no route defined, then assume it basis
 				// the name of the action
 				if out.getRoute() == "" {
-					out.Route = txt.CaseSnake(fieldType.Name)
+					out.Route = txt.CaseURL(fieldType.Name)
 				}
 
 				return out
