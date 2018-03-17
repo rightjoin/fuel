@@ -1,4 +1,4 @@
-#FUEL UP
+# FUEL UP
 REST & MVC framework
 
 ## Inspriration
@@ -74,11 +74,11 @@ You can test this by visiting: http://localhost:8421/hello-world/say-hola
 **Note:** FUEL is fully compatbile with the standard http handler semantics.
 
 ## Documentation
-####[Routing](./docs/routing.md)
+#### [Routing](./docs/routing.md)
 
 
 
-#### TODO
+##### TODO
 - test cases
 - map should be string->interface
 - set json encoder / decoder
