@@ -40,7 +40,7 @@ type HelloWorldController struct {
 
 Now add a field to it of type fuel.GET (this is equivalent to http get). Also implement a method that returns a string. Note that field and method have same spellings, expect that method is public & field is not.
 
-```
+```go
 type HelloWorldController struct {
 	fuel.Controller
 	sayHello fuel.GET
@@ -49,12 +49,18 @@ type HelloWorldController struct {
 func (s *HelloWorldController) SayHello() string {
 	return "Hello World"
 }
+
+func main() {
+	server := fuel.NewServer()
+	server.AddController(&HelloWorldController{})
+	server.Run()
+}
 ```
 Now open your browser and hit http://localhost:8421/hello-world/say-hello
 
 Lets say you don't want to use any magic. Just simple unadulterated http request and responses. Its time to say Hola!
 
-```
+```go
 type HelloWorldController struct {
 	fuel.Controller
 	sayHello fuel.GET
@@ -68,6 +74,12 @@ func (s *HelloWorldController) SayHello() string {
 func (s *HelloWorldController) SayHola(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hola")
 }
+
+func main() {
+	server := fuel.NewServer()
+	server.AddController(&HelloWorldController{})
+	server.Run()
+}
 ```
 You can test this by visiting: http://localhost:8421/hello-world/say-hola
 
@@ -75,6 +87,7 @@ You can test this by visiting: http://localhost:8421/hello-world/say-hola
 
 ## Documentation
 #### [Routing](./docs/routing.md)
+#### [Configuration Model](./docs/configuration.md)
 
 
 
