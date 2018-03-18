@@ -11,9 +11,8 @@ FUEL has a powerful hierarchical configuration mode that allows you to configure
 5. Field or Endpoint configuratoin (done programmatically through code)
 
 
-Note that:
-2 overrides 1
-3 overrides 2, and so on.
+**Note:**
+2 overrides 1; and 3 overrides 2, and so on.
 
 ### How it works : an example
 
@@ -40,10 +39,10 @@ func (s *HolaController) SayHola() string {
 
 
 func main() {
-	server := fuel.NewServer()
+    server := fuel.NewServer()
     server.AddController(&HelloWorldController{})
     server.AddController(&HolaController{})
-	server.Run()
+    server.Run()
 }
 ```
 
@@ -55,15 +54,15 @@ To give a version to these fields, we could do it directly at the server level:
 
 ```go
 func main() {
-	server := fuel.NewServer()
-    
+    server := fuel.NewServer()
+
     // NOTE:
     // This is inherited by all apis
-	server.Version = "1"
-    
+    server.Version = "1"
+
     server.AddController(&HelloWorldController{})
     server.AddController(&HolaController{})
-	server.Run()
+    server.Run()
 }
 ```
 
@@ -79,12 +78,12 @@ Now lets say we want to have all APIs in Hola controller to be at version 2. Thi
 
 ```go
 func main() {
-	server := fuel.NewServer()
-    
+    server := fuel.NewServer()
+
     // NOTE:
     // This is inherited by all apis
-	server.Version = "1"
-    
+    server.Version = "1"
+
     server.AddController(&HelloWorldController{})
 
 
@@ -93,7 +92,7 @@ func main() {
     hola := &HolaController{}
     hola.Version = "2"
     server.AddController(hola)
-    
+
     server.Run()
 }
 ```
@@ -121,7 +120,7 @@ Now lets say you want to have multiple different endpoints within HolaController
 
 ```go
 type HolaController struct {
-	fuel.Controller `version:"2"`
+    fuel.Controller `version:"2"`
     sayHola fuel.GET
     shoutHola fuel.GET `version:"2.1"`  // Note: override at field level
 }
@@ -131,7 +130,7 @@ func (s *HolaController) SayHola() string {
 }
 
 func (s *HolaController) ShoutHola() string {
-	return "Hoooolllllaaaaa"
+	return "Hoooolaaaaa"
 }
 ```
 Now you get following endpoints:
