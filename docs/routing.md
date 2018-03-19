@@ -87,12 +87,12 @@ type HelloWorldController struct {
 
 func (s *HelloWorldController) SaySomething(greeting string, count int) string {
 
-    repeat := ""
-    for i:= 0; i<count;i++ {
-        repeat += greeting + ","
-    }
+	repeat := ""
+	for i := 0; i < count; i++ {
+		repeat += greeting + ","
+	}
 
-	return repeat
+    return repeat
 }
 
 func main() {
@@ -109,8 +109,15 @@ This will produce the output:
 Namaste,Namaste,Namaste,Namaste,Namaste,
 ```
 
+It is important to note that we passed two different parameters - a string and an int. These are automatically inferred from the URL, and converted to the right types, and passed to the SaySomething function.
+
+
+
+---
+
 Notes:
  - FUEL uses gorilla mux for routing.
  - You can use slashes in prefix, root and route. It doesn't have to be just a single word. So the above example prefix could be changed from 'on-the-moon' to 'solar-system/on-the-moon'. 
  - You don't have to worry about slashes. Double (or more) slashes are cleaned up internally.
  - If you want to turn off automatic url inference, you can just say root:'-'. This would stop HelloWorldController to use 'hello-world' as its root value and just set it to be empty.
+ - FUEL has automatic parameter conversion for string, int and uint types. More types can be added. 
