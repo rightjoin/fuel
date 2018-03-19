@@ -145,11 +145,12 @@ Now you get following endpoints:
 
 | Tag                | Usage            
 | ------------------ |-----------------
-| prefix, pre        | Url prefix as in: http://abc.com/[prefix]/v1/root/url                 
-| root               | Url root as in: http://abc.com/prefix/v1/[root]/url                                  
-| url                | Url path as in in: http://abc.com/prefix/v1/root/[url]                            
-| version, ver       | Url version as in: http://abc.com/prefix/v[1]/root/url                                  
+| prefix, pre        | Url prefix as in: http://abc.com/[prefix]/v1/root/route
+| root               | Url root as in: http://abc.com/prefix/v1/[root]/route                             
+| route              | Url suffix as in in: http://abc.com/prefix/v1/root/[route]                            
+| version, ver       | Url version as in: http://abc.com/prefix/v[1]/root/route                               
 | cache              | The name of cache provider to use
-| ttl                | Duration to cache (e.g. 5s or 10m)
+| ttl                | Duration to cache for (e.g. 5s or 10m)
 | stub               | Relative or absolute path to the file containing the mock stub
-| middle, middleware | Middleware associated with the specific endpoint
+| middle, middleware | Middlewares associated with the specific endpoint (comma separated list)
+
