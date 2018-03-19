@@ -10,7 +10,7 @@ There are 4 main parts of a route in FUEL. These are:
  - route
 
 
-#### url = prefix + version + root + url
+### url = prefix + version + root + url
 
 Lets look again at our Hello World example again:
 
@@ -74,5 +74,8 @@ The new URLs are:
 - http://localhost:8421/on-the-moon/v1.1/flying-around/say-hello
 - http://localhost:8421/on-the-moon/flying-around/whisper-hola
 
-Note:
- 1. 
+Notes:
+ - FUEL uses gorilla mux for routing.
+ - You can use slashes in prefix, root and route. It doesn't have to be just a single word. So the above example prefix could be changed from 'on-the-moon' to 'solar-system/on-the-moon'. 
+ - You don't have to worry about slashes. Double (or more) slashes are cleaned up internally
+ - If you want to turn off automatic url inference, you can just say root:'-'. This would stop HelloWorldController to use 'hello-world' as its root value and just set it to be empty.
