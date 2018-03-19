@@ -14,6 +14,8 @@ FUEL has a powerful hierarchical configuration mode that allows you to configure
 **Note:**
 2 overrides 1; and 3 overrides 2, and so on.
 
+---
+
 ### How it works : an example
 
 FUEL comes with a powerful configuration model. Lets look at this with an example:
@@ -139,7 +141,7 @@ Now you get following endpoints:
 - http://localhost:8421/v2/hola/say-hola (note: v2)
 - http://localhost:8421/v2.1/hola/shout-hola (note: v2.1)
 
-
+---
 
 ### Configurations available
 
