@@ -112,6 +112,20 @@ Namaste,Namaste,Namaste,Namaste,Namaste,
 
 It is important to note that we passed two different parameters - a string and an int. These are automatically inferred from the URL, and converted to the right types, and passed to the SaySomething function.
 
+Also note that since the underlying router is Gorilla mux, you can use regular expressions in routes. In the above example, you could curtail count to only accept numbers like:
+
+```go
+type HelloWorldController struct {
+	fuel.Controller
+	saySomething fuel.GET `route:"say/{greeting}/{count:[0-9]+}"`
+}
+```
+
+---
+
+### Query Strings
+
+[todo]
 
 
 ---

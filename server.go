@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/rightjoin/stag"
+
 	"github.com/gorilla/mux"
 	"github.com/rightjoin/utila/txt"
 )
@@ -17,9 +19,10 @@ type Server struct {
 	Fixture
 	Port        int
 	mux         *mux.Router
-	middle      map[string]func(http.Handler) http.Handler
 	controllers []service
 	endpoints   map[string]endpoint
+	middle      map[string]func(http.Handler) http.Handler
+	caches      map[string]stag.Cache
 }
 
 func NewServer() Server {
@@ -29,14 +32,22 @@ func NewServer() Server {
 		middle:      make(map[string]func(http.Handler) http.Handler),
 		controllers: make([]service, 0),
 		endpoints:   make(map[string]endpoint),
+		caches:      make(map[string]stag.Cache, 0),
 	}
 }
 
 func (s *Server) DefineMiddleware(name string, fn func(http.Handler) http.Handler) {
 	if _, ok := s.middle[name]; ok {
-		panic("middleware already added: " + name)
+		panic("middleware already defined: " + name)
 	}
 	s.middle[name] = fn
+}
+
+func (s *Server) DefineCache(name string, c stag.Cache) {
+	if _, ok := s.caches[name]; ok {
+		panic("cache already defined: " + name)
+	}
+	s.caches[name] = c
 }
 
 func (s *Server) AddController(controller service) {
@@ -147,4 +158,8 @@ func (s *Server) Run() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+var CacheKey = func(r *http.Request) string {
+	return r.RequestURI
 }

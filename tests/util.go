@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/rightjoin/fuel"
 )
 
@@ -12,6 +14,7 @@ func asyncRun(s *fuel.Server) int {
 	go s.Run()
 
 	// wait some time for the server to fire up
+	time.Sleep(50 * time.Millisecond)
 
 	// TODO:
 	// check after 1 second. if the server is not up, then panic

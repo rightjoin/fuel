@@ -1,16 +1,22 @@
 package fuel
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/rightjoin/stag"
 
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
+
+var cacheWriter = serializer{}
 
 type endpoint struct {
 	Fixture
@@ -20,6 +26,9 @@ type endpoint struct {
 
 	standardHandler bool
 	usesAide        bool
+
+	myCache    stag.Cache
+	myCacheDur time.Duration
 }
 
 func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Server) endpoint {
@@ -56,6 +65,24 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 			return len(inv.inpSymbol) > 0 && inv.inpSymbol[len(inv.inpSymbol)-1] == aide // present at last index
 		}(),
 	}
+
+	// caching ::
+	out.myCache, out.myCacheDur = func() (stag.Cache, time.Duration) {
+		name := fix.getCache()
+		ttl := fix.getTTL()
+		dur, err := time.ParseDuration(ttl)
+		if ttl != "" && err != nil {
+			panic("incorrect ttl: " + ttl)
+		}
+		if name != "" {
+			c, found := server.caches[name]
+			if found {
+				return c, dur
+			}
+			panic("cache provider not found: " + name)
+		}
+		return nil, 0
+	}()
 
 	// validations::
 
@@ -94,11 +121,11 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 		switch len(inv.outSymbol) {
 		case 1:
 			if !acceptableOutput(inv.outSymbol[0]) {
-				panic("incorrect/unsupported output param in: " + seekMethod)
+				panic("incorrect or unsupported output param in: " + seekMethod)
 			}
 		case 2:
 			if !acceptableOutput(inv.outSymbol[0]) {
-				panic("incorrect/unsupported output param in: " + seekMethod)
+				panic("incorrect or unsupported output param in: " + seekMethod)
 			}
 			if inv.outSymbol[1] != "i:.error" {
 				panic("second output param must be error: " + seekMethod)
@@ -118,8 +145,12 @@ func (e *endpoint) setupMuxHandlers(server *Server) {
 
 	m := interpose.New()
 	if e.getMiddleware() != nil {
-		for _, midw := range e.getMiddleware() {
-			m.Use(server.middle[midw])
+		for _, midName := range e.getMiddleware() {
+			midw, found := server.middle[midName]
+			if !found {
+				panic("middleware not found: " + midName)
+			}
+			m.Use(midw)
 		}
 	}
 	fn := processRequest(e)
@@ -179,7 +210,31 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 			inputs = append(inputs, Aide{Request: r, Response: w})
 		}
 
-		outputs := e.invoke(inputs...)
+		var cacheOn = e.myCacheDur > 0 && r.Method == http.MethodGet
+		var outputs []reflect.Value
+
+		// cached vs non-cached behavior
+		if !cacheOn {
+			// there is no caching
+			outputs = e.invoke(inputs...)
+		} else {
+			// try finding cached value
+			val, err := e.myCache.Get(CacheKey(r))
+			if err == nil {
+				// hit hit hit!
+				outputs = cacheWriter.read(bytes.NewBuffer(val), e.outType)
+			} else {
+				// invoke the normal method
+				outputs = e.invoke(inputs...)
+				// try saving to cache
+				buf := cacheWriter.write(outputs)
+				e.myCache.Set(CacheKey(r), buf.Bytes(), e.myCacheDur)
+				// TODO: better error handling:
+				// - don't write to cache again for 5 sec
+				// - don't read from cache until that time etc
+			}
+		}
+
 		writeHTTP(e, w, r, outputs)
 	}
 }
