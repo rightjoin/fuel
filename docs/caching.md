@@ -39,7 +39,7 @@ Now using this cache is straight enough:
 
 ```go
 type CacheController struct {
-	fuel.Controller `cache:"cache1" ttl:"1m"`
+    fuel.Controller `cache:"cache1" ttl:"1m"`
     slowCall1 fuel.GET `ttl:"5m"`
     slowCall2 fuel.GET `cache:"cache2" ttl:"1h"`
     slowCall3 fuel.GET `cache:"cache3" ttl:"6h"`
@@ -47,23 +47,23 @@ type CacheController struct {
 }
 
 func (s *CacheController) SlowCall1() string {
-	time.Sleep(1 * time.Second)
-	return "Slow1"
+    time.Sleep(1 * time.Second)
+    return "Slow1"
 }
 
 func (s *CacheController) SlowCall2() string {
-	time.Sleep(2 * time.Second)
-	return "Slow2"
+    time.Sleep(2 * time.Second)
+    return "Slow2"
 }
 
 func (s *CacheController) SlowCall3() string {
-	time.Sleep(3 * time.Second)
-	return "Slow3"
+    time.Sleep(3 * time.Second)
+    return "Slow3"
 }
 
 func (s *CacheController) SlowCall4() string {
-	time.Sleep(4 * time.Second)
-	return "Slow4"
+    time.Sleep(4 * time.Second)
+    return "Slow4"
 }
 ```
 
