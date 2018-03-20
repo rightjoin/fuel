@@ -20,6 +20,9 @@ type Fixture struct {
 	// middleware
 	Middleware []string
 
+	// stub
+	Stub string
+
 	// caching
 	Cache string
 	TTL   string
@@ -45,6 +48,7 @@ func newFixture(tag reflect.StructTag) Fixture {
 		Version: read(tag, "version", "ver", "v"),
 		Cache:   read(tag, "cache"),
 		TTL:     read(tag, "ttl"),
+		Stub:    read(tag, "stub"),
 		Middleware: func() []string {
 			m := []string{}
 			list := strings.Split(read(tag, "middle", "middleware"), ",")
@@ -126,7 +130,7 @@ func (f Fixture) getURL() string {
 		urlOut = fmt.Sprintf("%s%s%s%s", prefix, root, url, version)
 	}
 
-	return cleanUrl(urlOut)
+	return cleanMultSlash(urlOut)
 }
 
 func (f Fixture) getVersion() string {
@@ -147,6 +151,19 @@ func (f Fixture) getMiddleware() []string {
 
 	if (value == nil || len(value) == 0) && f.Parent != nil {
 		value = f.Parent.getMiddleware()
+	}
+
+	return value
+}
+
+func (f Fixture) getStub() string {
+	value := f.Stub
+	if value == ignored {
+		return ""
+	}
+
+	if value == "" && f.Parent != nil {
+		value = f.Parent.getStub()
 	}
 
 	return value

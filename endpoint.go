@@ -41,7 +41,14 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	} else {
 		seekMethod = fld.Name + "_"
 	}
-	var inv = newInvoker(contr, seekMethod)
+
+	var inv = invoker{}
+	if fix.Stub == "" {
+		// we setup an actual invoker only if it is not a stub.
+		// otherwise newInvoker panics as it does not find the
+		// implementation method.
+		newInvoker(contr, seekMethod)
+	}
 
 	var aide = typeSymbol(reflect.TypeOf(Aide{}))
 	out := endpoint{
@@ -117,7 +124,7 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	// function outputs must of right format
-	if !out.standardHandler {
+	if !out.standardHandler && out.Stub == "" {
 		switch len(inv.outSymbol) {
 		case 1:
 			if !acceptableOutput(inv.outSymbol[0]) {
@@ -169,8 +176,22 @@ func (e *endpoint) uniqueURL() string {
 
 func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 
-	// call predefined function if the
-	// handler is a standard one
+	// stub::
+	// parse file contents and serve it back
+	if e.Stub != "" {
+		return func(w http.ResponseWriter, r *http.Request) {
+			data, err := readFile(e.Stub)
+			if err == nil {
+				fmt.Fprintf(w, "%s", data)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "Eror reading stub: %s", e.Stub)
+		}
+	}
+
+	// standard handler::
+	// call predefined function if it is a standard handler
 	if e.standardHandler {
 		return func(w http.ResponseWriter, r *http.Request) {
 			e.invoke(w, r)

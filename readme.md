@@ -32,7 +32,7 @@ Lets see how we can quickly write a Hello World Api
 
 First, create a controller. It should compose of fuel.Controller
 
-```
+```go
 type HelloWorldController struct {
 	fuel.Controller
 }
@@ -90,6 +90,7 @@ You can test this by visiting: http://localhost:8421/hello-world/say-hola
 #### [Routing](./docs/routing.md)
 #### [MVC](./docs/mvc.md)
 #### [Caching](./docs/caching.md)
+#### [Stubs](./docs/stub.md)
 #### [Middlewares](./docs/middleware.md)
 #### [Logging](./docs/logging.md)
 
