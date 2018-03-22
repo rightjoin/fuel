@@ -44,8 +44,6 @@ func MidSlowLog(slowSeconds float64) func(http.Handler) http.Handler {
 
 ```
 
-A
-
 To use it throughout the project on every single endpoint/action, we just enable it at the server level:
 
 ```go
@@ -67,7 +65,7 @@ Note that the middleware specification also follows the configuration model of F
 
 ```go
 type DemoController struct {
-	fuel.Controller
+    fuel.Controller
     fiveMiddlewareChain fuel.GET `middleware:"m1,m2,m3,m4,m5"`
     threeMiddlewareChain fuel.GET `middleware:"m1,m2,m3"`
 }
