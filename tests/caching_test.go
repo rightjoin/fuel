@@ -26,8 +26,7 @@ func TestCaching(t *testing.T) {
 	server := fuel.NewServer()
 	server.DefineCache("store", stag.NewGoCache(5*time.Second))
 	server.AddController(&CacheController{})
-	port := asyncRun(&server)
-	defer server.Close()
+	port := runAsync(&server)
 
 	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
 

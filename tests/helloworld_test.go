@@ -27,8 +27,7 @@ func (s *HelloWorldController) SayHola(w http.ResponseWriter, r *http.Request) {
 func TestHelloWorld(t *testing.T) {
 	server := fuel.NewServer()
 	server.AddController(&HelloWorldController{})
-	port := asyncRun(&server)
-	defer server.Close()
+	port := runAsync(&server)
 
 	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
 

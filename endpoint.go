@@ -43,11 +43,11 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	var inv = invoker{}
-	if fix.Stub == "" {
+	if fix.getStub() == "" {
 		// we setup an actual invoker only if it is not a stub.
 		// otherwise newInvoker panics as it does not find the
 		// implementation method.
-		newInvoker(contr, seekMethod)
+		inv = newInvoker(contr, seekMethod)
 	}
 
 	var aide = typeSymbol(reflect.TypeOf(Aide{}))
@@ -124,7 +124,7 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	// function outputs must of right format
-	if !out.standardHandler && out.Stub == "" {
+	if !out.standardHandler && fix.getStub() == "" {
 		switch len(inv.outSymbol) {
 		case 1:
 			if !acceptableOutput(inv.outSymbol[0]) {
