@@ -14,11 +14,11 @@ import (
 
 type CacheController struct {
 	fuel.Controller
-	fewSeconds fuel.GET `cache:"store" ttl:"1s"`
+	fewSeconds fuel.GET `cache:"store" ttl:"250ms"`
 }
 
 func (s *CacheController) FewSeconds() string {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	return "Slow"
 }
 
@@ -33,7 +33,7 @@ func TestCaching(t *testing.T) {
 	var start time.Time
 	var span time.Duration
 
-	// first call should take > 1 sec
+	// first call should take 250ms
 	start = time.Now()
 	web.Get("/cache/few-seconds").
 		Expect(t).
@@ -41,7 +41,7 @@ func TestCaching(t *testing.T) {
 		BodyEquals("Slow").
 		Done()
 	span = time.Now().Sub(start)
-	assert.True(t, span >= (1*time.Second) && span < (2*time.Second))
+	assert.True(t, span >= (250*time.Millisecond) && span < (300*time.Millisecond))
 
 	// next hit should be fast
 	start = time.Now()
@@ -53,10 +53,10 @@ func TestCaching(t *testing.T) {
 	span = time.Now().Sub(start)
 	assert.True(t, span < (100*time.Millisecond))
 
-	// expire the cache by waiting (1 sec)
-	time.Sleep(1050 * time.Millisecond)
+	// expire the cache by waiting for ~250ms
+	time.Sleep(300 * time.Millisecond)
 
-	// call should again take > 1 sec
+	// call should again take 250ms
 	start = time.Now()
 	web.Get("/cache/few-seconds").
 		Expect(t).
@@ -64,5 +64,5 @@ func TestCaching(t *testing.T) {
 		BodyEquals("Slow").
 		Done()
 	span = time.Now().Sub(start)
-	assert.True(t, span >= (1*time.Second) && span < (2*time.Second))
+	assert.True(t, span >= (250*time.Millisecond) && span < (300*time.Millisecond))
 }

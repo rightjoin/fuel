@@ -98,6 +98,8 @@ You can test this by visiting: http://localhost:8421/hello-world/say-hola
 
 ##### TODO
 - test cases
+- only cache 200 - OK values
+- re-arch cache to use middleware instead
 - map should be string->interface
 - set json encoder / decoder
 - ability to use a custom mux like httprouter
