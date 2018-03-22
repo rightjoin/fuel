@@ -8,7 +8,7 @@ import (
 	log "github.com/inconshreveable/log15"
 )
 
-func MiddlewareAccessLog() func(http.Handler) http.Handler {
+func MidAccessLog() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -18,7 +18,7 @@ func MiddlewareAccessLog() func(http.Handler) http.Handler {
 	}
 }
 
-func MiddlewareAccessAndSlowLog(slowSeconds float64) func(http.Handler) http.Handler {
+func MidAccessAndSlowLog(slowSeconds float64) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
