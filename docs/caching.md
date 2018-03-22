@@ -40,10 +40,10 @@ Now using this cache is straight enough:
 ```go
 type CacheController struct {
     fuel.Controller `cache:"cache1" ttl:"1m"`
-    slowCall1 fuel.GET `ttl:"5m"`
-    slowCall2 fuel.GET `cache:"cache2" ttl:"1h"`
-    slowCall3 fuel.GET `cache:"cache3" ttl:"6h"`
-    slowCall4 fuel.GET
+    slowCall1 fuel.GET
+    slowCall2 fuel.GET `ttl:"5m"`
+    slowCall3 fuel.GET `cache:"cache2" ttl:"1h"`
+    slowCall4 fuel.GET `cache:"cache3" ttl:"6h"`
 }
 
 func (s *CacheController) SlowCall1() string {
@@ -69,7 +69,18 @@ func (s *CacheController) SlowCall4() string {
 
 Points to note:
 
- - Setting 'cache' and 'ttl' at controller level (fuel.Controller tag) ensures that all services/actions under this controller are cached. So even though cache tag is not set for slowCall4 (http://localhost:8421/cache/slow-call4), it still inherits it from controller and ends up getting cached for 1 minute in cache store 1.
- - slowCall1 (http://localhost:8421/cache/slow-call1) overrides 'ttl' to '5m'. Hence it gets cached for 5 minutes in cache store 1.
- - slowCall2 (http://localhost:8421/cache/slow-call2) is cached for 1 hour in cache store 2.
- - slowCall3 (http://localhost:8421/cache/slow-call3) is cached for 6 hours in cache store 3.
+ - Setting 'cache' and 'ttl' at controller level (fuel.Controller tag) ensures that all services/actions under this controller are cached. So even though cache tag is not set for slowCall1 (http://localhost:8421/cache/slow-call1), it still inherits it from controller and ends up getting cached for 1 minute in cache store 1.
+ - slowCall2 (http://localhost:8421/cache/slow-call2) overrides 'ttl' to '5m'. Hence it gets cached for 5 minutes in cache store 1.
+ - slowCall3 (http://localhost:8421/cache/slow-call3) is cached for 1 hour in cache store 2.
+ - slowCall4 (http://localhost:8421/cache/slow-call4) is cached for 6 hours in cache store 3.
+
+**How does caching atually work?**
+ - FUEL caches the output of your function/handler into the given cache store. In the above examples, it would be 'string' - 'Slow4'.
+ - For the cache duration, FUEL would use this cache value instead of invoking the said function/handler.
+ 
+**Cache Index**
+  - Be default FUEL uses the relative URL of endpoint for cahcing.
+  - If you want to change this behavior, you can do so by upading FUEL.CacheKey function. For example, you may want to add session_id to this key to cache same URL separately for each user
+
+
+
