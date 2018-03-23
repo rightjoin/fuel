@@ -23,6 +23,7 @@ type endpoint struct {
 	controller service
 	field      reflect.StructField
 	invoker
+	paramName []string
 
 	standardHandler bool
 	usesAide        bool
@@ -56,6 +57,20 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 		controller: contr,
 		field:      fld,
 		invoker:    inv,
+		paramName: func() []string {
+			output := make([]string, 0)
+			dirs := strings.Split(fix.getURL(), "/")
+			for _, dir := range dirs {
+				if strings.HasPrefix(dir, "{") && strings.HasSuffix(dir, "}") {
+					p := dir[1 : len(dir)-1]
+					if strings.Contains(p, ":") {
+						p = p[0:strings.Index(p, ":")]
+					}
+					output = append(output, p)
+				}
+			}
+			return output
+		}(),
 
 		standardHandler: func() bool {
 			return len(inv.inpSymbol) == 2 &&
@@ -201,34 +216,36 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// get the inputs that need to be passed to the underlying handler
-		inputs := func() []interface{} {
-			muxVals := mux.Vars(r)
-			inp := make([]interface{}, len(muxVals))
-			i := 0
+		params := make([]interface{}, 0)
+		if len(e.paramName) > 0 {
 			var err error
-			for _, val := range muxVals {
+			params = make([]interface{}, len(e.paramName))
+			muxVals := mux.Vars(r)
+			for i, pName := range e.paramName {
+				val := muxVals[pName]
 				switch e.inpSymbol[i] {
 				case "string":
-					inp[i] = val
+					params[i] = val
 				case "int":
-					inp[i], err = strconv.Atoi(val)
+					params[i], err = strconv.Atoi(val)
 					if err != nil {
 						panic("input param expects 'int': " + val)
 					}
 				case "uint":
-					inp[i], err = strconv.ParseUint(val, 10, 32)
+					u, err := strconv.ParseUint(val, 10, 32)
 					if err != nil {
 						panic("input param expects 'uint': " + val)
 					}
+					params[i] = uint(u)
+					// TODO: default?
 				}
-				i++
 			}
-			return inp
-		}()
+
+		}
 
 		// do we need aide?
 		if e.usesAide {
-			inputs = append(inputs, Aide{Request: r, Response: w})
+			params = append(params, Aide{Request: r, Response: w})
 		}
 
 		var cacheOn = e.myCacheDur > 0 && r.Method == http.MethodGet
@@ -237,7 +254,7 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 		// cached vs non-cached behavior
 		if !cacheOn {
 			// there is no caching
-			outputs = e.invoke(inputs...)
+			outputs = e.invoke(params...)
 		} else {
 			// try finding cached value
 			val, err := e.myCache.Get(CacheKey(r))
@@ -246,7 +263,7 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 				outputs = cacheWriter.read(bytes.NewBuffer(val), e.outType)
 			} else {
 				// invoke the normal method
-				outputs = e.invoke(inputs...)
+				outputs = e.invoke(params...)
 				// try saving to cache
 				buf := cacheWriter.write(outputs)
 				e.myCache.Set(CacheKey(r), buf.Bytes(), e.myCacheDur)

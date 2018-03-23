@@ -49,8 +49,8 @@ func main() {
 ```
 
 This code gives us two endpoints:
-- http://localhost:8421/hello-world/say-hello
-- http://localhost:8421/hola/say-hola
+- http://localhost:8080/hello-world/say-hello
+- http://localhost:8080/hola/say-hola
 
 To give a version to these fields, we could do it directly at the server level:
 
@@ -70,8 +70,8 @@ func main() {
 
 Running this will give you following two endpoints. Note that all APIs are now versioned 'v1'
 
-- http://localhost:8421/v1/hello-world/say-hello
-- http://localhost:8421/v1/hola/say-hola
+- http://localhost:8080/v1/hello-world/say-hello
+- http://localhost:8080/v1/hola/say-hola
 
 
 Now lets say we want to have all APIs in Hola controller to be at version 2. This could be accomplished in two ways:
@@ -114,8 +114,8 @@ Option B gives you a declarative way to override base configurations
 
 Both these options will give you following endpoints
 
-- http://localhost:8421/v1/hello-world/say-hello
-- http://localhost:8421/v2/hola/say-hola  (Note: v2)
+- http://localhost:8080/v1/hello-world/say-hello
+- http://localhost:8080/v2/hola/say-hola  (Note: v2)
 
 Now lets say you want to have multiple different endpoints within HolaController. You could override version 2 using tags at field level.
 
@@ -137,9 +137,9 @@ func (s *HolaController) ShoutHola() string {
 ```
 Now you get following endpoints:
 
-- http://localhost:8421/v1/hello-world/say-hello (note: v1)
-- http://localhost:8421/v2/hola/say-hola (note: v2)
-- http://localhost:8421/v2.1/hola/shout-hola (note: v2.1)
+- http://localhost:8080/v1/hello-world/say-hello (note: v1)
+- http://localhost:8080/v2/hola/say-hola (note: v2)
+- http://localhost:8080/v2.1/hola/shout-hola (note: v2.1)
 
 ---
 

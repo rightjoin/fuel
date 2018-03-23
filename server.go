@@ -12,7 +12,7 @@ import (
 	"github.com/rightjoin/utila/txt"
 )
 
-const defaultPort = 8421
+const defaultPort = 8080
 
 type Server struct {
 	http.Server

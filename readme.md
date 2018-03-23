@@ -56,7 +56,7 @@ func main() {
 	server.Run()
 }
 ```
-Now open your browser and hit http://localhost:8421/hello-world/say-hello
+Now open your browser and hit http://localhost:8080/hello-world/say-hello
 
 **Note:** FUEL is fully compatbile with the standard http handler semantics. Lets say you don't want to use any magic. Just simple unadulterated http request and responses. Its time to say Hola!
 
@@ -82,7 +82,7 @@ func main() {
 	server.Run()
 }
 ```
-You can test this by visiting: http://localhost:8421/hello-world/say-hola
+You can test this by visiting: http://localhost:8080/hello-world/say-hola
 
 ## Documentation
 

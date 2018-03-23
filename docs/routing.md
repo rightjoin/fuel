@@ -43,8 +43,8 @@ In the example above, the default value for:
  - 'version' and 'prefix' are empty
 
 Hence the two urls that you get are:
- - http://localhost:8421/hello-world/say-hello
- - http://localhost:8421/hello-world/say-hola
+ - http://localhost:8080/hello-world/say-hello
+ - http://localhost:8080/hello-world/say-hola
 
 Lets introduce some values for prefix, root and route:
 
@@ -71,8 +71,8 @@ func main() {
 }
 ```
 The new URLs are:
-- http://localhost:8421/on-the-moon/v1.1/flying-around/say-hello
-- http://localhost:8421/on-the-moon/flying-around/whisper-hola
+- http://localhost:8080/on-the-moon/v1.1/flying-around/say-hello
+- http://localhost:8080/on-the-moon/flying-around/whisper-hola
 
 ---
 
@@ -103,7 +103,7 @@ func main() {
 }
 ```
 After you run this, you can simply hit the url:
- - http://localhost:8421/hello-world/say/namaste/5
+ - http://localhost:8080/hello-world/say/namaste/5
 
 This will produce the output:
 ```

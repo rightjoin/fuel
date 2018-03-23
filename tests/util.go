@@ -6,7 +6,7 @@ import (
 	"github.com/rightjoin/fuel"
 )
 
-var port = 8421
+var port = 8080
 
 func runAsync(s *fuel.Server) int {
 	port++

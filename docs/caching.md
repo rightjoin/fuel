@@ -68,10 +68,10 @@ func (s *CacheController) SlowCall4() string {
 ```
 
 **Points to note**
- - Setting 'cache' and 'ttl' at controller level (fuel.Controller tag) ensures that all services/actions under this controller are cached. So even though cache tag is not set for slowCall1 (http://localhost:8421/cache/slow-call1), it still inherits it from controller and ends up getting cached for 1 minute in cache store 1.
- - slowCall2 (http://localhost:8421/cache/slow-call2) overrides 'ttl' to '5m'. Hence it gets cached for 5 minutes in cache store 1.
- - slowCall3 (http://localhost:8421/cache/slow-call3) is cached for 1 hour in cache store 2.
- - slowCall4 (http://localhost:8421/cache/slow-call4) is cached for 6 hours in cache store 3.
+ - Setting 'cache' and 'ttl' at controller level (fuel.Controller tag) ensures that all services/actions under this controller are cached. So even though cache tag is not set for slowCall1 (http://localhost:8080/cache/slow-call1), it still inherits it from controller and ends up getting cached for 1 minute in cache store 1.
+ - slowCall2 (http://localhost:8080/cache/slow-call2) overrides 'ttl' to '5m'. Hence it gets cached for 5 minutes in cache store 1.
+ - slowCall3 (http://localhost:8080/cache/slow-call3) is cached for 1 hour in cache store 2.
+ - slowCall4 (http://localhost:8080/cache/slow-call4) is cached for 6 hours in cache store 3.
 
 **How does caching atually work?**
  - FUEL caches the output of your function/handler into the given cache store. In the above examples, it would be 'string' - 'Slow4'.
