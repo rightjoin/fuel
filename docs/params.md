@@ -1,6 +1,6 @@
 # FUEL :: Parameters, Query String and Context
 
-### Parameter Passing
+### Parameters
 
 FUEL offers automatic parameter conversion. Let's look at how this works:
 
@@ -45,6 +45,10 @@ type HelloWorldController struct {
 }
 ```
 
+Notes
+- FUEL has automatic parameter conversion for string, int and uint types
+- Note that you don't need to play with Request directly for any of this basic stuff
+
 ---
 
 ### Query Strings
@@ -52,5 +56,6 @@ type HelloWorldController struct {
 [todo]
 
 
-Notes
-- FUEL has automatic parameter conversion for string, int and uint types. More types can be added. 
+---
+
+### Context (=Aide)
