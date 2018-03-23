@@ -88,6 +88,7 @@ You can test this by visiting: http://localhost:8080/hello-world/say-hola
 
 #### [Configuration Model](./docs/configuration.md)
 #### [Routing](./docs/routing.md)
+#### [Parameters, Query String and Context](./docs/params.md)
 #### [MVC](./docs/mvc.md)
 #### [Caching](./docs/caching.md)
 #### [Stubs](./docs/stub.md)

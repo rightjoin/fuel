@@ -76,57 +76,7 @@ The new URLs are:
 
 ---
 
-### Parameter Passing
-
-FUEL offers automatic parameter conversion. Let's look at how this works:
-
-```go
-type HelloWorldController struct {
-	fuel.Controller
-	saySomething fuel.GET `route:"say/{greeting}/{count}"`
-}
-
-func (s *HelloWorldController) SaySomething(greeting string, count int) string {
-
-	repeat := ""
-	for i := 0; i < count; i++ {
-		repeat += greeting + ","
-	}
-
-    return repeat
-}
-
-func main() {
-	server := fuel.NewServer()
-	server.AddController(&HelloWorldController{})
-	server.Run()
-}
-```
-After you run this, you can simply hit the url:
- - http://localhost:8080/hello-world/say/namaste/5
-
-This will produce the output:
-```
-Namaste,Namaste,Namaste,Namaste,Namaste,
-```
-
-It is important to note that we passed two different parameters - a string and an int. These are automatically inferred from the URL, and converted to the right types, and passed to the SaySomething function.
-
-Also note that since the underlying router is Gorilla mux, you can use regular expressions in routes. In the above example, you could curtail count to only accept numbers like:
-
-```go
-type HelloWorldController struct {
-	fuel.Controller
-	saySomething fuel.GET `route:"say/{greeting}/{count:[0-9]+}"`
-}
-```
-
----
-
-### Query Strings
-
-[todo]
-
+Read more on [Parameter Passing](./params.md) 
 
 ---
 
@@ -135,4 +85,4 @@ Notes:
  - You can use slashes in prefix, root and route. It doesn't have to be just a single word. So the above example prefix could be changed from 'on-the-moon' to 'solar-system/on-the-moon'. 
  - You don't have to worry about slashes. Double (or more) slashes are cleaned up internally.
  - If you want to turn off automatic url inference, you can just say root:'-'. This would stop HelloWorldController to use 'hello-world' as its root value and just set it to be empty.
- - FUEL has automatic parameter conversion for string, int and uint types. More types can be added. 
+ 
