@@ -5,9 +5,9 @@
 FUEL has a powerful hierarchical configuration mode that allows you to configure all kinds of things like: middleware, cache, url structures and more. It works at 5 levels:
 
 1. Server configuration (done programmatically through code)
-2. Controller configuration (set declaratively using tag)
+2. Controller configuration (set declaratively using tags)
 3. Controller configuration (done programmatically through code)
-4. Field or Endpoint configuration (set declaratively using tag)
+4. Field or Endpoint configuration (set declaratively using tags)
 5. Field or Endpoint configuratoin (done programmatically through code)
 
 
@@ -148,9 +148,9 @@ Now you get following endpoints:
 | Tag                | Usage            
 | ------------------ |-----------------
 | prefix, pre        | Url prefix as in: http://abc.com/[prefix]/v1/root/route
-| root               | Url root as in: http://abc.com/prefix/v1/[root]/route                             
-| route              | Url suffix as in in: http://abc.com/prefix/v1/root/[route]                            
-| version, ver       | Url version as in: http://abc.com/prefix/v[1]/root/route                               
+| root               | Url root as in: http://abc.com/prefix/v1/[root]/route
+| route              | Url suffix as in in: http://abc.com/prefix/v1/root/[route]
+| version, ver       | Url version as in: http://abc.com/prefix/v[1]/root/route
 | cache              | The name of cache provider to use
 | ttl                | Duration to cache for (e.g. 5s or 10m)
 | stub               | Relative or absolute path to the file containing the mock stub

@@ -16,15 +16,17 @@ REST & MVC framework
 
 ## Features
 - Controllers to define endpoints (modular, structured and organized codebase)
-- Powerful configuration model
-- MVC
+- [Powerful configuration model](./docs/configuration.md)
+- [Routing](./docs/routing.md)
+- [Parameters, Query String and Context](./docs/params.md)
 - Versioning
-- Caching
-- Stubbing
+- [Caching](./docs/caching.md)
+- [Stubbing](./docs/stub.md)
+- [Middleware support](./docs/middleware.md)
+- [Logging](./docs/logging.md)
+- ~~[MVC](./docs/mvc.md)~~
 - ~~Proxying~~
 - ~~CRUD~~
-- Middleware support
-- Logging (using middleware)
 
 ## Hello World
 
@@ -84,26 +86,34 @@ func main() {
 ```
 You can test this by visiting: http://localhost:8080/hello-world/say-hola
 
-## Documentation
-
-#### [Configuration Model](./docs/configuration.md)
-#### [Routing](./docs/routing.md)
-#### [Parameters, Query String and Context](./docs/params.md)
-#### [MVC](./docs/mvc.md)
-#### [Caching](./docs/caching.md)
-#### [Stubs](./docs/stub.md)
-#### [Middlewares](./docs/middleware.md)
-#### [Logging](./docs/logging.md)
 
 
 
-##### TODO
-- test cases
+#### TODO
+- more test cases (WIP)
 - only cache 200 - OK values
-- re-arch cache to use middleware instead
 - map should be string->interface
 - set json encoder / decoder
+- slash at end? url support
+- aide helpers
+- mvc
+  - layout
+  - views
+  - view_dir
+  - minification
+  - file server
+  - templating
+    - css
+    - views
+  - session handling
+  - auth
+  - dev vs production env
+  - hot code reload
+  - support
+    - bower
+  - grunt / task runner
+  - csrf
+  - cors
 - ability to use a custom mux like httprouter
 - allow mux plug and play (setRouter())
-- slash at end? url support
-
+- re-arch cache to use middleware instead
