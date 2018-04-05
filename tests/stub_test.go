@@ -9,20 +9,20 @@ import (
 	"github.com/rightjoin/fuel"
 )
 
-type StubController struct {
+type MockController struct {
 	fuel.Controller
 	yetToCode fuel.GET `stub:"sub/directory/stub_file.txt"`
 }
 
 func TestStubbing(t *testing.T) {
 	server := fuel.NewServer()
-	server.AddController(&StubController{})
+	server.AddController(&MockController{})
 	port := runAsync(&server)
 
 	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
 
 	// first call should take > 1 sec
-	web.Get("/stub/yet-to-code").
+	web.Get("/mock/yet-to-code").
 		Expect(t).
 		Status(200).
 		BodyEquals("file data").

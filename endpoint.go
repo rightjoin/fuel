@@ -44,8 +44,10 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	var inv = invoker{}
-	if fix.getStub() == "" {
-		// we setup an actual invoker only if it is not a stub.
+	var skipInvoker = fix.getStub() != "" || fix.getFolder() != ""
+	if !skipInvoker {
+		// we setup an actual invoker only if it is not a stub,
+		// and also it is not a static file server.
 		// otherwise newInvoker panics as it does not find the
 		// implementation method.
 		inv = newInvoker(contr, seekMethod)
@@ -139,7 +141,8 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	// function outputs must of right format
-	if !out.standardHandler && fix.getStub() == "" {
+	var dontValidate = out.standardHandler || fix.getStub() != "" || fix.getFolder() != ""
+	if !dontValidate {
 		switch len(inv.outSymbol) {
 		case 1:
 			if !acceptableOutput(inv.outSymbol[0]) {
@@ -175,10 +178,25 @@ func (e *endpoint) setupMuxHandlers(server *Server) {
 			m.Use(midw)
 		}
 	}
-	fn := processRequest(e)
-	m.UseHandler(http.HandlerFunc(fn))
 
-	server.mux.Handle(e.getURL(), m).Methods(e.method())
+	if e.getFolder() != "" {
+		// setup static server
+		path := e.getURL()
+		if !strings.HasSuffix(path, "/") {
+			path = path + "/"
+			fmt.Println("CONFIGURING-URL:", path, "MAP-TO", e.getFolder())
+		}
+		//muxer.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./files/"))))
+		m.UseHandler(http.StripPrefix(path, http.FileServer(http.Dir(e.getFolder()))))
+		server.mux.PathPrefix(path).Handler(m).Methods(e.method())
+	} else {
+		// normal request processing is handled through
+		// processRequest function
+		fn := processRequest(e)
+		m.UseHandler(http.HandlerFunc(fn))
+		server.mux.Handle(e.getURL(), m).Methods(e.method())
+	}
+
 }
 
 func (e *endpoint) method() string {

@@ -5,14 +5,14 @@
 FUEL makes it super simple to quickly create mock api stubs by only writing very little code. You basically specify a file on disk, and FUEL reads and serves back its contents
 
 ```go
-type MockService struct {
-	RestService
-	yetToCode  GET `stub:"samples/some.txt"`
+type MockController struct {
+	fuel.Controller
+	yetToCode fuel.GET `stub:"sub/directory/stub_file.txt"`
 }
 
 // And then run it
-server := aqua.NewRestServer()
-server.AddService(&MockService{})
+server := fuel.NewServer()
+server.AddController(&MockController{})
 server.Run()
 ```
 

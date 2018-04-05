@@ -26,6 +26,9 @@ type Fixture struct {
 	// caching
 	Cache string
 	TTL   string
+
+	// static files
+	Folder string
 }
 
 func newFixture(tag reflect.StructTag) Fixture {
@@ -63,6 +66,7 @@ func newFixture(tag reflect.StructTag) Fixture {
 			}
 			return m
 		}(),
+		Folder: read(tag, "folder"),
 	}
 }
 
@@ -190,6 +194,19 @@ func (f Fixture) getTTL() string {
 
 	if value == "" && f.Parent != nil {
 		value = f.Parent.getTTL()
+	}
+
+	return value
+}
+
+func (f Fixture) getFolder() string {
+	value := f.Folder
+	if value == ignored {
+		return ""
+	}
+
+	if value == "" && f.Parent != nil {
+		value = f.Parent.getFolder()
 	}
 
 	return value
