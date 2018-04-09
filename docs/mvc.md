@@ -135,3 +135,7 @@ Note that:
  - When you hit http://localhost:8080/mvc/Brazil, you get "**Hello Brazil!**"
  - "mvc" directory is based on controller name (MvcController)
 
+Using fuel.View struct gives you 3 things to configure:
+ - View, the name of the view template to use. By default this is the same as field name (hello and hola above), but you are free to modify it
+ - Layout, the name of the layout to use. By default this is the same as the Layout specified in MvcOptions, but you can override it
+ - Data, dynamic data to be rendered in the template
