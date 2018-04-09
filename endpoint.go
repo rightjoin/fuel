@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/rightjoin/stag"
+	"github.com/rightjoin/utila/txt"
+	"github.com/unrolled/render"
 
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
@@ -30,6 +32,9 @@ type endpoint struct {
 
 	myCache    stag.Cache
 	myCacheDur time.Duration
+
+	mvcOptions MvcOpts
+	viewDir    string
 }
 
 func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Server) endpoint {
@@ -87,6 +92,15 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 				}
 			}
 			return len(inv.inpSymbol) > 0 && inv.inpSymbol[len(inv.inpSymbol)-1] == aide // present at last index
+		}(),
+		mvcOptions: server.MvcOptions,
+		viewDir: func() string {
+			name := reflect.TypeOf(contr).Elem().Name()
+			snake := txt.CaseURL(name)
+			if strings.HasSuffix(snake, "-controller") {
+				return snake[0 : len(name)-len("-controller")+1]
+			}
+			return snake
 		}(),
 	}
 
@@ -184,7 +198,6 @@ func (e *endpoint) setupMuxHandlers(server *Server) {
 		path := e.getURL()
 		if !strings.HasSuffix(path, "/") {
 			path = path + "/"
-			fmt.Println("CONFIGURING-URL:", path, "MAP-TO", e.getFolder())
 		}
 		//muxer.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./files/"))))
 		m.UseHandler(http.StripPrefix(path, http.FileServer(http.Dir(e.getFolder()))))
@@ -296,6 +309,7 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 }
 
 func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value) {
+
 	if len(data) == 1 {
 		writeItem(e, w, r, data[0])
 	} else {
@@ -315,14 +329,38 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 	var symbol = typeSymbol(runtimeType)
 
+	// helper function for json
 	var sendJSON = func() {
 		jsn, err := json.Marshal(item.Interface())
 		if err != nil {
-
+			// TODO: error
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(jsn)))
 		w.Write(jsn)
+	}
+
+	// helper function for view rendering
+	var renderView = func() {
+		v := item.Interface().(View)
+		if v.View == "" {
+			v.View = e.field.Name
+		}
+		if v.Layout == "" {
+			v.Layout = e.mvcOptions.Layout
+		}
+
+		//fmt.Println(">>", e.mvcOptions.Views+"/"+e.viewDir+"/"+v.View, ">>", e.mvcOptions.Views+"/"+v.Layout)
+
+		rndr.HTML(w, http.StatusOK, e.viewDir+"/"+v.View, v.Data, render.HTMLOptions{
+			Layout: v.Layout,
+		})
+
+		// fmt.Println(">>>>>", e.viewDir)
+		// jsn, _ := json.Marshal(v)
+		// w.Header().Set("Content-Type", "application/json")
+		// w.Header().Set("Content-Length", strconv.Itoa(len(jsn)))
+		// w.Write(jsn)
 	}
 
 	switch {
@@ -336,6 +374,8 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 	case symbol == "map":
 		// TODO: string -> interface{}
 		sendJSON()
+	case symbol == viewSymbol:
+		renderView()
 	case strings.HasPrefix(symbol, "st:"):
 		sendJSON()
 	case strings.HasPrefix(symbol, "sl:"):

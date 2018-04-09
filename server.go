@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rightjoin/stag"
+	"github.com/unrolled/render"
 
 	"github.com/gorilla/mux"
 	"github.com/rightjoin/utila/txt"
@@ -23,6 +24,8 @@ type Server struct {
 	endpoints   map[string]endpoint
 	middle      map[string]func(http.Handler) http.Handler
 	caches      map[string]stag.Cache
+
+	MvcOptions MvcOpts
 }
 
 func NewServer() Server {
@@ -33,6 +36,7 @@ func NewServer() Server {
 		controllers: make([]service, 0),
 		endpoints:   make(map[string]endpoint),
 		caches:      make(map[string]stag.Cache, 0),
+		MvcOptions:  defaultMvcOpts(),
 	}
 }
 
@@ -151,6 +155,14 @@ func (s *Server) Run() {
 	// the user may add a cache later on (after calling AddController),
 	// or the user may add middleware later on
 	s.loadEndpoints()
+
+	// setup the renderer:
+	// basis some of the settings passed to server's MvcOptions
+	rndr = render.New(render.Options{
+		Directory:  s.MvcOptions.Views,
+		Layout:     s.MvcOptions.Layout,
+		Extensions: []string{".html"},
+	})
 
 	s.Addr = fmt.Sprintf(":%d", s.Port)
 	s.Server.Handler = s.mux

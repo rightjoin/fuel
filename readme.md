@@ -101,7 +101,6 @@ You can test this by visiting: http://localhost:8080/hello-world/say-hola
   - views
   - view_dir
   - minification
-  - file server
   - templating
     - css
     - views
