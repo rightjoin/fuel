@@ -97,13 +97,10 @@ You can test this by visiting: http://localhost:8080/hello-world/say-hola
 - slash at end? url support
 - aide helpers
 - mvc
-  - layout
-  - views
-  - view_dir
   - minification
   - templating
     - css
-    - views
+    - view partials
   - session handling
   - auth
   - dev vs production env

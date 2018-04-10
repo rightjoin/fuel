@@ -2,7 +2,6 @@ package fuel
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -329,47 +328,43 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 	var symbol = typeSymbol(runtimeType)
 
-	// helper function for json
 	var sendJSON = func() {
-		jsn, err := json.Marshal(item.Interface())
-		if err != nil {
-			// TODO: error
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Length", strconv.Itoa(len(jsn)))
-		w.Write(jsn)
+		// TODO: error validation
+		rndr.JSON(w, http.StatusOK, item.Interface())
 	}
 
-	// helper function for view rendering
+	//helper function for view rendering
 	var renderView = func() {
 		v := item.Interface().(View)
-		if v.View == "" {
-			v.View = e.field.Name
+
+		// view
+		var view = v.View
+		if view == "" {
+			view = e.field.Name
 		}
-		if v.Layout == "" {
-			v.Layout = e.mvcOptions.Layout
+		var finalView = cleanMultSlash(e.viewDir + "/" + view)
+
+		// layout
+		var layout = v.Layout
+		if layout == "" {
+			layout = e.mvcOptions.Layout
 		}
 
 		//fmt.Println(">>", e.mvcOptions.Views+"/"+e.viewDir+"/"+v.View, ">>", e.mvcOptions.Views+"/"+v.Layout)
 
-		rndr.HTML(w, http.StatusOK, e.viewDir+"/"+v.View, v.Data, render.HTMLOptions{
-			Layout: v.Layout,
+		rndr.HTML(w, http.StatusOK, finalView, v.Data, render.HTMLOptions{
+			Layout: layout,
 		})
-
-		// fmt.Println(">>>>>", e.viewDir)
-		// jsn, _ := json.Marshal(v)
-		// w.Header().Set("Content-Type", "application/json")
-		// w.Header().Set("Content-Length", strconv.Itoa(len(jsn)))
-		// w.Write(jsn)
 	}
 
 	switch {
 	case symbol == "string":
 		{
-			data := item.Interface().(string)
-			w.Header().Set("Content-Type", "text/plain")
-			w.Header().Set("Content-Lenght", strconv.Itoa(len(data)))
-			fmt.Fprintf(w, "%s", data)
+			rndr.Text(w, http.StatusOK, item.Interface().(string))
+			// data := item.Interface().(string)
+			// w.Header().Set("Content-Type", "text/plain")
+			// w.Header().Set("Content-Lenght", strconv.Itoa(len(data)))
+			// fmt.Fprintf(w, "%s", data)
 		}
 	case symbol == "map":
 		// TODO: string -> interface{}
