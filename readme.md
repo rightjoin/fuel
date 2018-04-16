@@ -93,9 +93,8 @@ You can test this by visiting: http://localhost:8080/hello-world/say-hola
 - more test cases (WIP)
 - only cache 200 - OK values
 - map should be string->interface
-- set json encoder / decoder
-- slash at end? url support
 - aide helpers
+- allowed functions
 - mvc
   - minification
   - templating
@@ -110,6 +109,9 @@ You can test this by visiting: http://localhost:8080/hello-world/say-hola
   - grunt / task runner
   - csrf
   - cors
-- ability to use a custom mux like httprouter
-- allow mux plug and play (setRouter())
 - re-arch cache to use middleware instead
+- server events | begin_reqeust and end_request
+- os signals
+- slash at end? url support
+- allow mux plug and play (setRouter())
+
