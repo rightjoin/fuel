@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/rightjoin/stag"
 	"github.com/unrolled/render"
@@ -30,6 +31,12 @@ type Server struct {
 
 func NewServer() Server {
 	return Server{
+		Server: http.Server{
+			ReadTimeout:  1 * time.Minute,
+			WriteTimeout: 1 * time.Minute,
+			IdleTimeout:  15 * time.Minute,
+		},
+
 		Port:        defaultPort,
 		mux:         mux.NewRouter(),
 		middle:      make(map[string]func(http.Handler) http.Handler),
