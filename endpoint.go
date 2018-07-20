@@ -312,7 +312,15 @@ func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []refle
 	if len(data) == 1 {
 		writeItem(e, w, r, data[0])
 	} else {
-
+		// Second parameter is type error.
+		// If it is NIL then all good, so
+		// process everything as normal.
+		// Otherwise process error.
+		if data[1].IsNil() {
+			writeItem(e, w, r, data[0])
+		} else {
+			writeItem(e, w, r, data[1])
+		}
 	}
 }
 
