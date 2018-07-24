@@ -133,7 +133,7 @@ func (f Fixture) getURL() string {
 	}
 
 	if version != "" {
-		version += "v" + version
+		version = "v" + version
 	}
 
 	if VersionAfterPrefix == true {
