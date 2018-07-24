@@ -84,10 +84,11 @@ func (f Fixture) getPrefix() string {
 }
 
 func (f Fixture) getRoot() string {
+
 	value := f.Root
-	if value == ignored {
-		return ""
-	}
+	// if value == ignored {
+	// 	return ""
+	// }
 
 	if value == "" && f.Parent != nil {
 		value = f.Parent.getRoot()
@@ -113,25 +114,32 @@ func (f Fixture) getURL() string {
 
 	var urlOut string
 
-	var prefix, version, root, url = f.getPrefix(), f.getVersion(), f.getRoot(), f.getRoute()
+	var prefix, version, root, route = f.getPrefix(), f.getVersion(), f.getRoot(), f.getRoute()
 
-	if prefix != "" {
-		prefix = "/" + prefix
+	if prefix == ignored {
+		prefix = ""
 	}
+
+	if version == ignored {
+		version = ""
+	}
+
+	if root == ignored {
+		root = ""
+	}
+
+	if route == ignored {
+		route = ""
+	}
+
 	if version != "" {
-		version = "/v" + version
-	}
-	if root != "" {
-		root = "/" + root
-	}
-	if url != "" {
-		url = "/" + url
+		version += "v" + version
 	}
 
 	if VersionAfterPrefix == true {
-		urlOut = fmt.Sprintf("%s%s%s%s", prefix, version, root, url)
+		urlOut = fmt.Sprintf(`/%s/%s/%s/%s`, prefix, version, root, route)
 	} else {
-		urlOut = fmt.Sprintf("%s%s%s%s", prefix, root, url, version)
+		urlOut = fmt.Sprintf(`/%s/%s/%s/%s`, prefix, root, route, version)
 	}
 
 	return cleanMultSlash(urlOut)
