@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rightjoin/stag"
+	"github.com/rightjoin/stak"
 	"github.com/rightjoin/utila/txt"
 	"github.com/unrolled/render"
 
@@ -29,7 +29,7 @@ type endpoint struct {
 	standardHandler bool
 	usesAide        bool
 
-	myCache    stag.Cache
+	myCache    stak.Cache
 	myCacheDur time.Duration
 
 	mvcOptions MvcOpts
@@ -104,7 +104,7 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 	}
 
 	// caching ::
-	out.myCache, out.myCacheDur = func() (stag.Cache, time.Duration) {
+	out.myCache, out.myCacheDur = func() (stak.Cache, time.Duration) {
 		name := fix.getCache()
 		ttl := fix.getTTL()
 		dur, err := time.ParseDuration(ttl)
@@ -326,19 +326,32 @@ func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []refle
 
 func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect.Value) {
 
-	// if reflect value is a ptr, then lets
-	// just process its internal element
+	_, isError := item.Interface().(error)
+
+	// If reflect value is a ptr, then
+	// remove indirection (unless an error).
+	// If we remove indirectin for error values too,
+	// then it messes up their conversion to error.
 	runtimeType := reflect.TypeOf(item.Interface())
-	if runtimeType.Kind() == reflect.Ptr {
+	if !isError && runtimeType.Kind() == reflect.Ptr {
+		fmt.Println("remove-indirection", typeSymbol(runtimeType))
 		writeItem(e, w, r, item.Elem())
 		return
 	}
 
 	var symbol = typeSymbol(runtimeType)
 
-	var sendJSON = func() {
+	var sendJSON = func(status ...int) {
+
+		// If no status passed to func
+		// then use OK. Else used first value
+		sendStatus := http.StatusOK
+		if len(status) != 0 {
+			sendStatus = status[0]
+		}
+
 		// TODO: error validation
-		rndr.JSON(w, http.StatusOK, item.Interface())
+		rndr.JSON(w, sendStatus, item.Interface())
 	}
 
 	//helper function for view rendering
@@ -365,7 +378,32 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		})
 	}
 
+	fmt.Println("writeItem()::begining-switch::symbol->", symbol)
 	switch {
+	case symbol == faultSymbol:
+		f := item.Interface().(Fault)
+		httpStatus := http.StatusOK
+		if f.Code >= 400 && f.Code < 500 {
+			httpStatus = f.Code
+		} else {
+			switch r.Method {
+			case http.MethodGet:
+				// 404
+				httpStatus = http.StatusNotFound
+			default:
+				// 417
+				httpStatus = http.StatusExpectationFailed
+			}
+		}
+		sendJSON(httpStatus)
+	case isError:
+		if item.Interface() == nil {
+			success := map[string]interface{}{"success": 1}
+			writeItem(e, w, r, reflect.ValueOf(success))
+			return
+		}
+		f := Fault{Message: "An error occurred", Inner: item.Interface().(error)}
+		writeItem(e, w, r, reflect.ValueOf(f))
 	case symbol == "string":
 		{
 			rndr.Text(w, http.StatusOK, item.Interface().(string))
@@ -383,7 +421,6 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		sendJSON()
 	case strings.HasPrefix(symbol, "sl:"):
 		sendJSON()
-	case symbol == "i.error":
 	default:
 		panic("unable to process: " + symbol)
 	}

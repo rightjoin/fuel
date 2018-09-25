@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rightjoin/stag"
 	"github.com/unrolled/render"
 
 	"github.com/gorilla/mux"
+	"github.com/rightjoin/stak"
 	"github.com/rightjoin/utila/txt"
 )
 
@@ -24,7 +24,7 @@ type Server struct {
 	controllers []service
 	endpoints   map[string]endpoint
 	middle      map[string]func(http.Handler) http.Handler
-	caches      map[string]stag.Cache
+	caches      map[string]stak.Cache
 
 	MvcOptions MvcOpts
 }
@@ -42,7 +42,7 @@ func NewServer() Server {
 		middle:      make(map[string]func(http.Handler) http.Handler),
 		controllers: make([]service, 0),
 		endpoints:   make(map[string]endpoint),
-		caches:      make(map[string]stag.Cache, 0),
+		caches:      make(map[string]stak.Cache, 0),
 		MvcOptions:  defaultMvcOpts(),
 	}
 }
@@ -54,7 +54,7 @@ func (s *Server) DefineMiddleware(name string, fn func(http.Handler) http.Handle
 	s.middle[name] = fn
 }
 
-func (s *Server) DefineCache(name string, c stag.Cache) {
+func (s *Server) DefineCache(name string, c stak.Cache) {
 	if _, ok := s.caches[name]; ok {
 		panic("cache already defined: " + name)
 	}
