@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/rightjoin/stak"
-	"github.com/rightjoin/utila/txt"
+	"github.com/rightjoin/utila/conv"
 	"github.com/unrolled/render"
 
 	"github.com/carbocation/interpose"
@@ -95,7 +95,7 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 		mvcOptions: server.MvcOptions,
 		viewDir: func() string {
 			name := reflect.TypeOf(contr).Elem().Name()
-			snake := txt.CaseURL(name)
+			snake := conv.CaseURL(name)
 			if strings.HasSuffix(snake, "-controller") {
 				return snake[0 : len(name)-len("-controller")+1]
 			}
@@ -403,6 +403,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			return
 		}
 		f := Fault{Message: "An error occurred", Inner: item.Interface().(error)}
+		fmt.Println("wrapping error into fault:", f.Inner)
 		writeItem(e, w, r, reflect.ValueOf(f))
 	case symbol == "string":
 		{

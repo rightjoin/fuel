@@ -11,7 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rightjoin/stak"
-	"github.com/rightjoin/utila/txt"
+	"github.com/rightjoin/utila/conv"
 )
 
 const defaultPort = 8080
@@ -95,7 +95,7 @@ func (s *Server) loadEndpoints() {
 			// if there is no root value set, then
 			// use controller name (minus -controller) as Root
 			if fixCode.getRoot() == "" {
-				fixCode.Root = txt.CaseURL(ctype.Name())
+				fixCode.Root = conv.CaseURL(ctype.Name())
 				if strings.HasSuffix(fixCode.Root, "-controller") {
 					fixCode.Root = fixCode.Root[0 : len(fixCode.Root)-len("-controller")]
 				}
@@ -137,7 +137,7 @@ func (s *Server) loadEndpoints() {
 				// if no route defined, then assume it basis
 				// the name of the action
 				if out.getRoute() == "" {
-					out.Route = txt.CaseURL(fieldType.Name)
+					out.Route = conv.CaseURL(fieldType.Name)
 				}
 
 				return out
