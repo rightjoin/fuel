@@ -2,6 +2,7 @@ package fuel
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -63,11 +64,12 @@ func (a *Aide) Post() map[string]string {
 			for k := range a.Request.PostForm {
 				a.post[k] = strings.Join(a.Request.PostForm[k], separator)
 			}
-		case contentType == "application/json":
+		case strings.HasPrefix(contentType, "application/json"):
+			a.body = new(string)
 			*a.body = string(getBody(a.Request))
 			jsn := make(map[string]interface{})
 			err := json.Unmarshal([]byte(*a.body), &jsn)
-			if err != nil {
+			if err == nil {
 				for key, data := range jsn {
 					if val, ok := data.(string); ok { // put string value directly
 						a.post[key] = val
@@ -83,6 +85,8 @@ func (a *Aide) Post() map[string]string {
 				panic(err)
 			}
 		default:
+			fmt.Println("Unhandled Content Type:", contentType)
+			a.body = new(string)
 			*a.body = string(getBody(a.Request))
 		}
 
