@@ -332,7 +332,8 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 	// remove indirection (unless an error).
 	// If we remove indirectin for error values too,
 	// then it messes up their conversion to error.
-	runtimeType := reflect.TypeOf(item.Interface())
+	//runtimeType := reflect.TypeOf(item.Interface())
+	runtimeType := item.Type()
 	if !isError && runtimeType.Kind() == reflect.Ptr {
 		fmt.Println("remove-indirection", typeSymbol(runtimeType))
 		writeItem(e, w, r, item.Elem())
@@ -396,7 +397,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			}
 		}
 		sendJSON(httpStatus)
-	case isError:
+	case isError || (symbol == "i:.error"):
 		if item.Interface() == nil {
 			success := map[string]interface{}{"success": 1}
 			writeItem(e, w, r, reflect.ValueOf(success))
