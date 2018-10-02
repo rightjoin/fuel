@@ -182,8 +182,10 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 func (e *endpoint) setupMuxHandlers(server *Server) {
 
 	m := interpose.New()
-	if e.getMiddleware() != nil {
-		for _, midName := range e.getMiddleware() {
+	mw := e.getMiddleware()
+	skipMware := mw == nil || (len(mw) == 1 && mw[0] == "-")
+	if !skipMware {
+		for _, midName := range mw {
 			midw, found := server.middle[midName]
 			if !found {
 				panic("middleware not found: " + midName)
