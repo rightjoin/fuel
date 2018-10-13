@@ -425,6 +425,8 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		sendJSON()
 	case strings.HasPrefix(symbol, "sl:"):
 		sendJSON()
+	case symbol == "i:.":
+		writeItem(e, w, r, reflect.ValueOf(item.Interface()))
 	default:
 		panic("unable to process: " + symbol)
 	}
