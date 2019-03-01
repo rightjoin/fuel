@@ -92,7 +92,7 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 			}
 			return len(inv.inpSymbol) > 0 && inv.inpSymbol[len(inv.inpSymbol)-1] == aide // present at last index
 		}(),
-		mvcOptions: server.MvcOptions,
+		mvcOptions: server._MvcOptions,
 		viewDir: func() string {
 			name := reflect.TypeOf(myparent).Elem().Name()
 			snake := conv.CaseURL(name)

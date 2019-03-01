@@ -26,7 +26,7 @@ type Server struct {
 	middle    map[string]func(http.Handler) http.Handler
 	caches    map[string]stak.Cache
 
-	MvcOptions MvcOpts
+	_MvcOptions MvcOpts // hidden for now (NO MVC)
 }
 
 func NewServer() Server {
@@ -37,13 +37,13 @@ func NewServer() Server {
 			IdleTimeout:  15 * time.Minute,
 		},
 
-		Port:       defaultPort,
-		mux:        mux.NewRouter(),
-		middle:     make(map[string]func(http.Handler) http.Handler),
-		svcs:       make([]serviceComposite, 0),
-		endpoints:  make(map[string]endpoint),
-		caches:     make(map[string]stak.Cache, 0),
-		MvcOptions: defaultMvcOpts(),
+		Port:        defaultPort,
+		mux:         mux.NewRouter(),
+		middle:      make(map[string]func(http.Handler) http.Handler),
+		svcs:        make([]serviceComposite, 0),
+		endpoints:   make(map[string]endpoint),
+		caches:      make(map[string]stak.Cache, 0),
+		_MvcOptions: defaultMvcOpts(),
 	}
 }
 
@@ -77,27 +77,27 @@ func (s *Server) AddService(svc serviceComposite) {
 
 func (s *Server) loadEndpoints() {
 
-	for _, controller := range s.svcs {
+	for _, svc := range s.svcs {
 
 		// load endpoints::
 
-		ctype := reflect.TypeOf(controller).Elem()
-		cvalue := reflect.ValueOf(controller).Elem()
+		ctype := reflect.TypeOf(svc).Elem()
+		cvalue := reflect.ValueOf(svc).Elem()
 
-		// build controller fixture
+		// build service fixture
 		fixContr := func() Fixture {
-			fldCont, _ := ctype.FieldByName("Controller")
+			fldCont, _ := ctype.FieldByName("Service")
 			fixTag := newFixture(fldCont.Tag)
-			fixCode := cvalue.FieldByName("Controller").FieldByName("Fixture").Interface().(Fixture)
+			fixCode := cvalue.FieldByName("Service").FieldByName("Fixture").Interface().(Fixture)
 			fixCode.Parent = &fixTag
 			fixTag.Parent = &s.Fixture
 
 			// if there is no root value set, then
-			// use controller name (minus -controller) as Root
+			// use service name (minus -service) as Root
 			if fixCode.getRoot() == "" {
 				fixCode.Root = conv.CaseURL(ctype.Name())
-				if strings.HasSuffix(fixCode.Root, "-controller") {
-					fixCode.Root = fixCode.Root[0 : len(fixCode.Root)-len("-controller")]
+				if strings.HasSuffix(fixCode.Root, "-service") {
+					fixCode.Root = fixCode.Root[0 : len(fixCode.Root)-len("-service")]
 				}
 			}
 			return fixCode
@@ -144,7 +144,7 @@ func (s *Server) loadEndpoints() {
 			}()
 
 			// build the endpoint, and store it in the server
-			epoint := newEndpoint(fix, controller, fieldType, s)
+			epoint := newEndpoint(fix, svc, fieldType, s)
 			uniqURL := epoint.uniqueURL()
 			if _, ok := s.endpoints[uniqURL]; ok {
 				panic("cannot use same url again: " + uniqURL)
@@ -166,8 +166,8 @@ func (s *Server) Run() {
 	// setup the renderer:
 	// basis some of the settings passed to server's MvcOptions
 	rndr = render.New(render.Options{
-		Directory:  s.MvcOptions.Views,
-		Layout:     s.MvcOptions.Layout,
+		Directory:  s._MvcOptions.Views,
+		Layout:     s._MvcOptions.Layout,
 		Extensions: []string{".html"},
 	})
 
