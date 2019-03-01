@@ -1,3 +1,0 @@
-# FUEL :: Logging
-
-### Introuction
