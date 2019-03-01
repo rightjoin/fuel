@@ -6,52 +6,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testControllerA struct {
+type serviceA struct {
 }
 
-func (t testControllerA) BeginRequest() {
-
-}
-
-func (t testControllerA) EndRequest() {
+func (t serviceA) BeginRequest() {
 
 }
 
-func TestAddControllerNotComposedOfController(t *testing.T) {
+func (t serviceA) EndRequest() {
+
+}
+
+func TestAddServiceNotComposedOfFuelService(t *testing.T) {
 
 	s := NewServer()
 	assert.Panics(t, func() {
-		s.AddController(&testControllerA{})
+		s.AddService(&serviceA{})
 	})
 }
 
-func TestAddControllerAddress(t *testing.T) {
+func TestAddServiceAddress(t *testing.T) {
 
-	type testControllerB struct {
-		Controller
+	type serviceB struct {
+		Service
 	}
 
 	s := NewServer()
 	assert.Panics(t, func() {
-		s.AddController(testControllerB{})
+		s.AddService(serviceB{})
 	})
 	assert.NotPanics(t, func() {
-		s.AddController(&testControllerB{})
+		s.AddService(&serviceB{})
 	})
 }
 
-type DittooController struct {
-	Controller
+type serviceC struct {
+	Service
 	aGet GET `route:"a-url"`
 	bGet GET `route:"a-url"`
 }
 
-func (me DittooController) AGet() string { return "" }
-func (me DittooController) BGet() string { return "" }
+func (me serviceC) AGet() string { return "" }
+func (me serviceC) BGet() string { return "" }
 
 func TestDittooURLs(t *testing.T) {
 	s := NewServer()
-	s.AddController(&DittooController{})
+	s.AddService(&serviceC{})
 	assert.Panics(t, func() {
 		s.loadEndpoints()
 	})

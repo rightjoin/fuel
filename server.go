@@ -19,12 +19,12 @@ const defaultPort = 8080
 type Server struct {
 	http.Server
 	Fixture
-	Port        int
-	mux         *mux.Router
-	controllers []service
-	endpoints   map[string]endpoint
-	middle      map[string]func(http.Handler) http.Handler
-	caches      map[string]stak.Cache
+	Port      int
+	mux       *mux.Router
+	svcs      []serviceComposite
+	endpoints map[string]endpoint
+	middle    map[string]func(http.Handler) http.Handler
+	caches    map[string]stak.Cache
 
 	MvcOptions MvcOpts
 }
@@ -37,13 +37,13 @@ func NewServer() Server {
 			IdleTimeout:  15 * time.Minute,
 		},
 
-		Port:        defaultPort,
-		mux:         mux.NewRouter(),
-		middle:      make(map[string]func(http.Handler) http.Handler),
-		controllers: make([]service, 0),
-		endpoints:   make(map[string]endpoint),
-		caches:      make(map[string]stak.Cache, 0),
-		MvcOptions:  defaultMvcOpts(),
+		Port:       defaultPort,
+		mux:        mux.NewRouter(),
+		middle:     make(map[string]func(http.Handler) http.Handler),
+		svcs:       make([]serviceComposite, 0),
+		endpoints:  make(map[string]endpoint),
+		caches:     make(map[string]stak.Cache, 0),
+		MvcOptions: defaultMvcOpts(),
 	}
 }
 
@@ -61,23 +61,23 @@ func (s *Server) DefineCache(name string, c stak.Cache) {
 	s.caches[name] = c
 }
 
-func (s *Server) AddController(controller service) {
+func (s *Server) AddService(svc serviceComposite) {
 
 	// input validation:
-	if reflect.TypeOf(controller).Kind() != reflect.Ptr {
-		panic("controller must be passed as a pointer")
+	if reflect.TypeOf(svc).Kind() != reflect.Ptr {
+		panic("service must be passed as a pointer")
 	}
-	if !composedOf(controller, Controller{}) {
-		panic("controller must be composed of fuel.Controller")
+	if !composedOf(svc, Service{}) {
+		panic("service must be composed of fuel.Service")
 	}
 
 	// store it
-	s.controllers = append(s.controllers, controller)
+	s.svcs = append(s.svcs, svc)
 }
 
 func (s *Server) loadEndpoints() {
 
-	for _, controller := range s.controllers {
+	for _, controller := range s.svcs {
 
 		// load endpoints::
 

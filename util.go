@@ -64,11 +64,11 @@ func acceptableOutput(typeSym string) bool {
 
 var portTesting = 9900
 
-func serverInstance(run bool, conrollers ...service) *Server {
+func serverInstance(run bool, conrollers ...serviceComposite) *Server {
 
 	var server = NewServer()
 	for _, c := range conrollers {
-		server.AddController(c)
+		server.AddService(c)
 	}
 
 	// TODO: lock

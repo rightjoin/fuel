@@ -21,8 +21,8 @@ var cacheWriter = serializer{}
 
 type endpoint struct {
 	Fixture
-	controller service
-	field      reflect.StructField
+	parent serviceComposite
+	field  reflect.StructField
 	invoker
 	paramName []string
 
@@ -36,7 +36,7 @@ type endpoint struct {
 	viewDir    string
 }
 
-func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Server) endpoint {
+func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField, server *Server) endpoint {
 
 	// if field is abc, then methods must be Abc
 	// if field is Abc, then method must be Abc_
@@ -54,15 +54,15 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 		// and also it is not a static file server.
 		// otherwise newInvoker panics as it does not find the
 		// implementation method.
-		inv = newInvoker(contr, seekMethod)
+		inv = newInvoker(myparent, seekMethod)
 	}
 
 	var aide = typeSymbol(reflect.TypeOf(Aide{}))
 	out := endpoint{
-		Fixture:    fix,
-		controller: contr,
-		field:      fld,
-		invoker:    inv,
+		Fixture: fix,
+		parent:  myparent,
+		field:   fld,
+		invoker: inv,
 		paramName: func() []string {
 			output := make([]string, 0)
 			dirs := strings.Split(fix.getURL(), "/")
@@ -94,10 +94,10 @@ func newEndpoint(fix Fixture, contr service, fld reflect.StructField, server *Se
 		}(),
 		mvcOptions: server.MvcOptions,
 		viewDir: func() string {
-			name := reflect.TypeOf(contr).Elem().Name()
+			name := reflect.TypeOf(myparent).Elem().Name()
 			snake := conv.CaseURL(name)
-			if strings.HasSuffix(snake, "-controller") {
-				return snake[0 : len(name)-len("-controller")+1]
+			if strings.HasSuffix(snake, "-service") {
+				return snake[0 : len(name)-len("-service")+1]
 			}
 			return snake
 		}(),
