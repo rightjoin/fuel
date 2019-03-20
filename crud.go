@@ -6,8 +6,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/rightjoin/dorm"
-	"github.com/rightjoin/utila/conv"
-	"github.com/rightjoin/utila/refl"
+	"github.com/rightjoin/rutl/conv"
+	"github.com/rightjoin/rutl/refl"
 )
 
 // FindHelper runs when model.Find GET service is invoked
