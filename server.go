@@ -165,7 +165,7 @@ func (s *Server) Run() {
 
 	// load endpoints:
 	// we do it at the end in the 'Run' step because
-	// the user may add a cache later on (after calling AddController),
+	// the user may add a cache later on (after calling AddService),
 	// or the user may add middleware later on
 	s.loadEndpoints()
 
