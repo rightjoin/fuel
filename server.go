@@ -150,7 +150,13 @@ func (s *Server) loadEndpoints() {
 				panic("cannot use same url again: " + uniqURL)
 			}
 			s.endpoints[uniqURL] = epoint
-			fmt.Println(uniqURL)
+
+			// print it in formatted manner
+			spaces := "  "
+			for i := strings.Index(uniqURL, ":"); i < len("DELETE:")-1; i++ {
+				spaces += " "
+			}
+			fmt.Println(spaces + uniqURL)
 		}
 	}
 }
