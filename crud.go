@@ -13,7 +13,7 @@ import (
 // FindHelper runs when model.Find GET service is invoked
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
 
-	// if dbo is null, obtain
+	// If dbo is null, obtain
 	// access to read-only replica
 	if dbo == nil {
 		dbo = dorm.GetORM(false)
@@ -23,7 +23,7 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	query := map[string]interface{}{}
 	params := ad.Query()
 
-	// if param matches one of model fields,
+	// If param matches one of model fields,
 	// then only we use it in exact query
 	for _, f := range flds {
 		fldName := conv.CaseSnake(f.Name) // field's sql or db name
@@ -70,10 +70,10 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	return dbo.Where(query).Order(order).Offset(offset).Limit(size).Find(ptrArrModel).Error
 }
 
-// QueryHelper runs when model.Query POST service is invoke
+// QueryHelper runs when model.Query POST service is invoked
 func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
 
-	// if dbo is null, obtain
+	// If dbo is null, obtain
 	// access to read-only replica
 	if dbo == nil {
 		dbo = dorm.GetORM(false)
