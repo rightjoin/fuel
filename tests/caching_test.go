@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rightjoin/stag"
 	"github.com/stretchr/testify/assert"
 	baloo "gopkg.in/h2non/baloo.v3"
 
