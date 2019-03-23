@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"strconv"
 	"testing"
 	"time"
 
@@ -9,25 +8,26 @@ import (
 	baloo "gopkg.in/h2non/baloo.v3"
 
 	"github.com/rightjoin/fuel"
+	"github.com/rightjoin/stak"
 )
 
-type CacheController struct {
-	fuel.Controller
+type CacheService struct {
+	fuel.Service
 	fewSeconds fuel.GET `cache:"store" ttl:"250ms"`
 }
 
-func (s *CacheController) FewSeconds() string {
+func (s *CacheService) FewSeconds() string {
 	time.Sleep(250 * time.Millisecond)
 	return "Slow"
 }
 
 func TestCaching(t *testing.T) {
 	server := fuel.NewServer()
-	server.DefineCache("store", stag.NewGoCache(5*time.Second))
-	server.AddController(&CacheController{})
-	port := runAsync(&server)
+	server.DefineCache("store", stak.NewGoCache(5*time.Second))
+	server.AddService(&CacheService{})
+	url, _ := server.RunTestInstance()
 
-	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
+	var web = baloo.New(url)
 
 	var start time.Time
 	var span time.Duration

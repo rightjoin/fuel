@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"strconv"
 	"testing"
 
 	baloo "gopkg.in/h2non/baloo.v3"
@@ -9,17 +8,17 @@ import (
 	"github.com/rightjoin/fuel"
 )
 
-type MockController struct {
-	fuel.Controller
+type MockService struct {
+	fuel.Service
 	yetToCode fuel.GET `stub:"sub/directory/stub_file.txt"`
 }
 
 func TestStubbing(t *testing.T) {
 	server := fuel.NewServer()
-	server.AddController(&MockController{})
-	port := runAsync(&server)
+	server.AddService(&MockService{})
+	url, _ := server.RunTestInstance()
 
-	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
+	var web = baloo.New(url)
 
 	// first call should take > 1 sec
 	web.Get("/mock/yet-to-code").

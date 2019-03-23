@@ -3,33 +3,32 @@ package tests
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/rightjoin/fuel"
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-type HelloWorldController struct {
-	fuel.Controller
+type HelloWorldService struct {
+	fuel.Service
 	sayHello fuel.GET
 	sayHola  fuel.GET
 }
 
-func (s *HelloWorldController) SayHello() string {
+func (s *HelloWorldService) SayHello() string {
 	return "Hello World"
 }
 
-func (s *HelloWorldController) SayHola(w http.ResponseWriter, r *http.Request) {
+func (s *HelloWorldService) SayHola(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hola")
 }
 
 func TestHelloWorld(t *testing.T) {
 	server := fuel.NewServer()
-	server.AddController(&HelloWorldController{})
-	port := runAsync(&server)
+	server.AddService(&HelloWorldService{})
+	url, _ := server.RunTestInstance()
 
-	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
+	var web = baloo.New(url)
 
 	web.Get("/hello-world/say-hello").
 		Expect(t).

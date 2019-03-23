@@ -13,13 +13,13 @@ You can achive this by simply doing the following:
 
 ```go
 type FileController struct {
-    fuel.Controller
+    fuel.Service
     assets fuel.GET `root:"-" folder:"./static/content/"`
 }
 
 func main() {
     server := fuel.NewServer()
-    server.AddController(&FileController{})
+    server.AddService(&FileController{})
     server.Run()
 }
 
@@ -43,7 +43,7 @@ func main() {
     // Note: Use "templats" folder in place of the default "views" folder
     server.MvcOptions.Views = "templates"
 
-    server.AddController(&FileController{})
+    server.AddService(&FileController{})
     server.Run()
 }
 ```
@@ -60,7 +60,7 @@ func main() {
     // Note: Uses "layout.html" as the default layout
     server.MvcOptions.Layout = "layout"
 
-    server.AddController(&FileController{})
+    server.AddService(&FileController{})
     server.Run()
 }
 ```
@@ -69,7 +69,7 @@ Of course, you can override it at the view level as well:
 
 ```go
 type MvcController struct {
-    fuel.Controller
+    fuel.Service
     hello     fuel.GET
 }
 
@@ -84,7 +84,7 @@ func (s *MvcController) Hello() fuel.View {
 
 ```go
 type MvcController struct {
-	fuel.Controller
+	fuel.Service
 	hello fuel.GET
 	hola  fuel.GET `route:"{country}"`
 }
@@ -104,7 +104,7 @@ func (s *MvcController) Hola(country string) fuel.View {
 func (c Canvas) Fuel() {
 	server := fuel.NewServer()
 	server.MvcOptions.Layout = "layout"
-	server.AddController(&MvcController{})
+	server.AddService(&MvcController{})
 	server.Run()
 }
 ```

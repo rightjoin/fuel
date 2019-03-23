@@ -3,30 +3,29 @@ package tests
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/rightjoin/fuel"
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-type AuthController struct {
-	fuel.Controller
+type AuthService struct {
+	fuel.Service
 
 	locked fuel.GET `middleware:"basic"`
 }
 
-func (s *AuthController) Locked(w http.ResponseWriter, r *http.Request) {
+func (s *AuthService) Locked(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hola")
 }
 
 func TestBasicAuth(t *testing.T) {
 	server := fuel.NewServer()
 	server.DefineMiddleware("basic", fuel.MidBasicAuth("abc", "def", "local"))
-	server.AddController(&AuthController{})
-	port := runAsync(&server)
+	server.AddService(&AuthService{})
+	url, _ := server.RunTestInstance()
 
-	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
+	var web = baloo.New(url)
 
 	web.Get("/auth/locked").
 		Expect(t).

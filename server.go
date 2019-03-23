@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/unrolled/render"
@@ -183,6 +184,30 @@ func (s *Server) Run() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+var mx = sync.Mutex{}
+var portToUse = 9595
+
+// RunTestInstance selects a port for the underlying server to be run.
+// It starts at 9595, and with each invocation picks the next one.
+// It also starts the server async and returns the root localhost
+// url along with the port number
+func (s *Server) RunTestInstance() (url string, port int) {
+	// Critical Section
+	mx.Lock()
+	{
+		portToUse++
+		s.Port = portToUse
+	}
+	mx.Unlock()
+
+	go s.Run()
+
+	// Give the server 50ms to fire up
+	time.Sleep(50 * time.Millisecond)
+
+	return fmt.Sprintf("http://localhost:%d", s.Port), s.Port
 }
 
 var CacheKey = func(r *http.Request) string {

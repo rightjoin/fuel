@@ -3,7 +3,6 @@ package tests
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -11,22 +10,22 @@ import (
 	baloo "gopkg.in/h2non/baloo.v3"
 )
 
-type MiddlewareController struct {
-	fuel.Controller
+type MiddlewareService struct {
+	fuel.Service
 	m1 fuel.GET `route:"m1/{input}"`
 	m2 fuel.GET `route:"m2/{input}" middle:"b"`
 	m3 fuel.GET `route:"m3/{input}" middleware:"a,b"`
 }
 
-func (s *MiddlewareController) M1(inp string) string {
+func (s *MiddlewareService) M1(inp string) string {
 	return "M1"
 }
 
-func (s *MiddlewareController) M2(inp string) string {
+func (s *MiddlewareService) M2(inp string) string {
 	return "M2"
 }
 
-func (s *MiddlewareController) M3(inp string) string {
+func (s *MiddlewareService) M3(inp string) string {
 	return "M3"
 }
 
@@ -43,7 +42,7 @@ func midA() func(http.Handler) http.Handler {
 	}
 }
 
-// return 'a' if request URI ends with a
+// return 'b' if request URI ends with b
 func midB() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -58,12 +57,12 @@ func midB() func(http.Handler) http.Handler {
 
 func TestMiddleware(t *testing.T) {
 	server := fuel.NewServer()
-	server.AddController(&MiddlewareController{})
+	server.AddService(&MiddlewareService{})
 	server.DefineMiddleware("a", midA())
 	server.DefineMiddleware("b", midB())
-	port := runAsync(&server)
+	url, _ := server.RunTestInstance()
 
-	var web = baloo.New("http://localhost:" + strconv.Itoa(port))
+	var web = baloo.New(url)
 
 	// no middleware
 	web.Get("/middleware/m1/anything").
