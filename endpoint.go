@@ -381,7 +381,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		})
 	}
 
-	fmt.Println("writeItem()::begining-switch::symbol->", symbol)
+	fmt.Println("writeItem()::symbol->", symbol)
 	switch {
 	case symbol == faultSymbol:
 		f := item.Interface().(Fault)

@@ -85,23 +85,31 @@ func (s *Server) loadEndpoints() {
 		ctype := reflect.TypeOf(svc).Elem()
 		cvalue := reflect.ValueOf(svc).Elem()
 
-		// build service fixture
-		fixContr := func() Fixture {
-			fldCont, _ := ctype.FieldByName("Service")
-			fixTag := newFixture(fldCont.Tag)
+		// Build service fixture as follows:
+		//  1. Higest Parent = Server
+		//  2. -1 Parent = Service configuration programmatically
+		//  3. -2 Parent = Service configuration declaratively
+		// Note: We give higher precedence to declarative configuration
+		// over programmatic configuration
+		fixParent := func() Fixture {
+			field, _ := ctype.FieldByName("Service")
+			fixTag := newFixture(field.Tag)
 			fixCode := cvalue.FieldByName("Service").FieldByName("Fixture").Interface().(Fixture)
-			fixCode.Parent = &fixTag
-			fixTag.Parent = &s.Fixture
 
-			// if there is no root value set, then
+			// Set parent hierarchy
+			fixTag.Parent = &fixCode
+			fixCode.Parent = &s.Fixture
+
+			// If there is no root value set, then
 			// use service name (minus -service) as Root
-			if fixCode.getRoot() == "" {
-				fixCode.Root = conv.CaseURL(ctype.Name())
-				if strings.HasSuffix(fixCode.Root, "-service") {
-					fixCode.Root = fixCode.Root[0 : len(fixCode.Root)-len("-service")]
+			if fixTag.getRoot() == "" {
+				extractRoot := conv.CaseURL(ctype.Name())
+				if strings.HasSuffix(extractRoot, "-service") {
+					extractRoot = extractRoot[0 : len(extractRoot)-len("-service")]
 				}
+				fixTag.Root = extractRoot
 			}
-			return fixCode
+			return fixTag
 		}()
 
 		for i := 0; i < ctype.NumField(); i++ {
@@ -118,33 +126,33 @@ func (s *Server) loadEndpoints() {
 				continue
 			}
 
-			// build endpoint fixture
+			// Build endpoint fixture.
+			// Again, we give higher precedence to
+			// declarative configuration over programmatic configuration
 			fix := func() Fixture {
-				var out Fixture
 				fixTag := newFixture(fieldType.Tag)
-				fixTag.Parent = &fixContr
-				out = fixTag
+				fixTag.Parent = &fixParent
 
+				// For uppercase fields, exract programmatic configuration also
+				// (when lowercase this is not possible as the field value
+				//  become unexported)
 				if fieldType.Name[0:1] == strings.ToUpper(fieldType.Name[0:1]) {
-					// this field starts Uppercase,
-					// so extract GET.Fixture also
-					// (when lowercase this is not possible as the field value
-					//  become unexported)
+					// extract GET.Fixture /etc
 					fixCode := fieldValue.FieldByName("Fixture").Interface().(Fixture)
-					fixCode.Parent = &fixTag
-					out = fixCode
+					fixCode.Parent = &fixParent
+					fixTag.Parent = &fixCode
 				}
 
 				// if no route defined, then assume it basis
 				// the name of the action
-				if out.getRoute() == "" {
-					out.Route = conv.CaseURL(fieldType.Name)
+				if fixTag.Route == "" {
+					fixTag.Route = conv.CaseURL(fieldType.Name)
 				}
 
-				return out
+				return fixTag
 			}()
 
-			// build the endpoint, and store it in the server
+			// Build the endpoint, and store it in the server
 			epoint := newEndpoint(fix, svc, fieldType, s)
 			uniqURL := epoint.uniqueURL()
 			if _, ok := s.endpoints[uniqURL]; ok {
@@ -152,7 +160,7 @@ func (s *Server) loadEndpoints() {
 			}
 			s.endpoints[uniqURL] = epoint
 
-			// print it in formatted manner
+			// Print it in formatted manner
 			spaces := "  "
 			for i := strings.Index(uniqURL, ":"); i < len("DELETE:")-1; i++ {
 				spaces += " "

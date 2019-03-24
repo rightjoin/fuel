@@ -79,3 +79,19 @@ func TestURL(t *testing.T) {
 	VersionAfterPrefix = false
 	assert.Equal(t, "/p1/r1/r1/vv1", fix.getURL())
 }
+
+func TestIgnore(t *testing.T) {
+	fix := Fixture{
+		Root:  "r1",
+		Route: "t1",
+	}
+
+	child := Fixture{
+		Route:  "-",
+		Parent: &fix,
+	}
+
+	assert.Equal(t, "/r1/t1", fix.getURL())
+
+	assert.Equal(t, "/r1", child.getURL())
+}
