@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/logrusorgru/aurora"
+
 	"github.com/unrolled/render"
 
 	"github.com/gorilla/mux"
@@ -165,8 +167,9 @@ func (s *Server) loadEndpoints() {
 			for i := strings.Index(uniqURL, ":"); i < len("DELETE:")-1; i++ {
 				spaces += " "
 			}
-			fmt.Println(spaces + uniqURL)
+			fmt.Println(spaces, aurora.Blue(epoint.method()), epoint.Fixture.getURL())
 		}
+
 	}
 }
 
@@ -185,6 +188,9 @@ func (s *Server) Run() {
 		Layout:     s._MvcOptions.Layout,
 		Extensions: []string{".html"},
 	})
+
+	// Print port information
+	fmt.Println("    ", aurora.Black("Port").BgGreen(), aurora.Green(s.Port))
 
 	s.Addr = fmt.Sprintf(":%d", s.Port)
 	s.Server.Handler = s.mux
