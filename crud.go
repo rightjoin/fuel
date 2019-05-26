@@ -17,7 +17,7 @@ import (
 var QPageSize = "page-size"
 var QPageNum = "page-num"
 var QOrderBy = "order-by"
-var QOrderDirn = "order-dir"
+var QOrderDir = "order-dir"
 
 // FindHelper runs when model.Find GET service is invoked
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
@@ -74,7 +74,7 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	if !ok {
 		order = "id" // default order is "id"
 	}
-	dirn, ok := params[QOrderDirn]
+	dirn, ok := params[QOrderDir]
 	if !ok {
 		dirn = "asc"
 	}
