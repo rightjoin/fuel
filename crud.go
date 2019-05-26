@@ -10,6 +10,11 @@ import (
 	"github.com/rightjoin/rutl/refl"
 )
 
+var pageSize = "[q]page-size"
+var pageNum = "[q]page-num"
+var orderBy = "[q]order-by"
+var orderDirn = "[q]order-dir"
+
 // FindHelper runs when model.Find GET service is invoked
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
 
@@ -33,41 +38,47 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 		}
 	}
 
-	// Count
+	// Total Record Count
 	var count int
 	err := dbo.Model(modl).Where(query).Count(&count).Error
 	if err != nil {
 		return err
 	}
-	ad.Response.Header().Set(dorm.HeaderCount, fmt.Sprintf("%d", count))
+	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
-	// Size
-	sizeVal, ok := params[":page-size"]
-	if !ok {
-		sizeVal = "-1"
-	}
+	// Pagination Size
+	sizeVal, ok := params[pageSize]
 	size := conv.IntOr(sizeVal, 100)
+	if size == -1 { // if pagination size is -1, then retreive all records
+		size = count
+	}
+	ad.Response.Header().Set(HeaderPageSize, fmt.Sprintf("%d", size))
+	fmt.Println(sizeVal, size, "<---")
 
-	// Page Number
-	pageVal, ok := params[":page-num"]
+	// Page Number (to retreive)
+	pageVal, ok := params[pageNum]
 	if !ok {
 		pageVal = "1"
 	}
 	page := conv.IntOr(pageVal, 1)
+	ad.Response.Header().Set(HeaderPageNum, fmt.Sprintf("%d", page))
+	fmt.Println(pageVal, page, "<---")
 
 	// Calculate Offset
-	offset := 0
-	if size != -1 {
-		offset = (page - 1) * size
-	}
+	offset := (page - 1) * size
 
-	// Order
-	order, ok := params[":order"]
+	// Order-By and Order Direction
+	order, ok := params[orderBy]
 	if !ok {
 		order = "id" // default order is "id"
 	}
+	dirn, ok := params[orderDirn]
+	if !ok {
+		dirn = "asc"
+	}
+	orderDir := fmt.Sprintf("%s %s", order, dirn)
 
-	return dbo.Where(query).Order(order).Offset(offset).Limit(size).Find(ptrArrModel).Error
+	return dbo.Where(query).Order(orderDir).Offset(offset).Limit(size).Find(ptrArrModel).Error
 }
 
 // QueryHelper runs when model.Query POST service is invoked
@@ -88,13 +99,13 @@ func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.D
 		}
 	}
 
-	// Count
+	// Record Count
 	var count int
 	err := dbo.Model(modl).Where(where, params).Count(&count).Error
 	if err != nil {
 		return err
 	}
-	ad.Response.Header().Set(dorm.HeaderCount, fmt.Sprintf("%d", count))
+	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
 	return dbo.Where(where, params).Find(ptrArrModel).Error
 }
