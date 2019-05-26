@@ -10,10 +10,14 @@ import (
 	"github.com/rightjoin/rutl/refl"
 )
 
-var pageSize = "[q]page-size"
-var pageNum = "[q]page-num"
-var orderBy = "[q]order-by"
-var orderDirn = "[q]order-dir"
+// Note: Even if there is a table column named PageSize, its
+// SQL reference would be page_size (snake case). It would not
+// conflict with default query values
+
+var QPageSize = "page-size"
+var QPageNum = "page-num"
+var QOrderBy = "order-by"
+var QOrderDirn = "order-dir"
 
 // FindHelper runs when model.Find GET service is invoked
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
@@ -47,32 +51,30 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
 	// Pagination Size
-	sizeVal, ok := params[pageSize]
+	sizeVal, ok := params[QPageSize]
 	size := conv.IntOr(sizeVal, 100)
 	if size == -1 { // if pagination size is -1, then retreive all records
 		size = count
 	}
 	ad.Response.Header().Set(HeaderPageSize, fmt.Sprintf("%d", size))
-	fmt.Println(sizeVal, size, "<---")
 
 	// Page Number (to retreive)
-	pageVal, ok := params[pageNum]
+	pageVal, ok := params[QPageNum]
 	if !ok {
 		pageVal = "1"
 	}
 	page := conv.IntOr(pageVal, 1)
 	ad.Response.Header().Set(HeaderPageNum, fmt.Sprintf("%d", page))
-	fmt.Println(pageVal, page, "<---")
 
 	// Calculate Offset
 	offset := (page - 1) * size
 
 	// Order-By and Order Direction
-	order, ok := params[orderBy]
+	order, ok := params[QOrderBy]
 	if !ok {
 		order = "id" // default order is "id"
 	}
-	dirn, ok := params[orderDirn]
+	dirn, ok := params[QOrderDirn]
 	if !ok {
 		dirn = "asc"
 	}
