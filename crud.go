@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
 	"github.com/rightjoin/dorm"
+
+	"github.com/jinzhu/gorm"
 	"github.com/rightjoin/rutl/conv"
 	"github.com/rightjoin/rutl/refl"
 )
@@ -24,9 +25,9 @@ var QAltDb = "alt-db"
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
 
 	// If dbo is null, obtain
-	// access to read-only replica
+	// a DBO object
 	if dbo == nil {
-		dbo = dorm.GetORM(false)
+		dbo = QueryDB(ad)
 	}
 
 	flds := refl.NestedFields(modl)
@@ -88,9 +89,9 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
 
 	// If dbo is null, obtain
-	// access to read-only replica
+	// a DBO object
 	if dbo == nil {
-		dbo = dorm.GetORM(false)
+		dbo = QueryDB(ad)
 	}
 
 	where := ad.Post()["where"]
@@ -111,4 +112,13 @@ func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.D
 	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
 	return dbo.Where(where, params).Find(ptrArrModel).Error
+}
+
+// QueryDB sets up how fule gets the underlying ORM
+// for the call. Default is to use master. However,
+// if "alt-db" is present in Query String, then use
+// a slave
+func QueryDB(ad Aide) *gorm.DB {
+	_, slave := ad.Query()[QAltDb]
+	return dorm.GetORM(!slave)
 }
