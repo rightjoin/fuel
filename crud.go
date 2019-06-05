@@ -18,6 +18,7 @@ var QPageSize = "page-size"
 var QPageNum = "page-num"
 var QOrderBy = "order-by"
 var QOrderDir = "order-dir"
+var QAltDb = "alt-db"
 
 // FindHelper runs when model.Find GET service is invoked
 func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB) error {
