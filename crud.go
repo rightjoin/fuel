@@ -78,7 +78,7 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	}
 	dirn, ok := params[QOrderDir]
 	if !ok {
-		dirn = "asc"
+		dirn = "desc"
 	}
 	orderDir := fmt.Sprintf("%s %s", order, dirn)
 
