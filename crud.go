@@ -72,13 +72,20 @@ func FindHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.DB
 	offset := (page - 1) * size
 
 	// Order-By and Order Direction
+	idDefault := false
 	order, ok := params[QOrderBy]
 	if !ok {
-		order = "id" // default order is "id"
+		// default order is "id"
+		idDefault = true
+		order = "id"
 	}
 	dirn, ok := params[QOrderDir]
 	if !ok {
-		dirn = "desc"
+		if idDefault {
+			dirn = "desc"
+		} else {
+			dirn = "asc"
+		}
 	}
 	orderDir := fmt.Sprintf("%s %s", order, dirn)
 
