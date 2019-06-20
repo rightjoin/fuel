@@ -1,4 +1,4 @@
-module "https://github.com/rightjoin/fuel"
+module github.com/rightjoin/fuel
 
 go 1.12
 
@@ -28,7 +28,6 @@ require (
 	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
 	github.com/rightjoin/dorm v0.0.0-20190531102100-a2edb12c8441
 	github.com/rightjoin/fig v0.0.0-20180307044807-5fa1d70e624c // indirect
-	github.com/rightjoin/fuel v0.0.0-20190606083657-2665fe386100
 	github.com/rightjoin/log15 v0.0.0-20170202204638-998d73e2850a // indirect
 	github.com/rightjoin/rlog v0.0.0-20190322103338-552cadac61e6 // indirect
 	github.com/rightjoin/rutl v0.0.0-20190429034327-6ccca6b49792
