@@ -2,12 +2,15 @@ package fuel
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/asaskevich/govalidator"
 
 	"github.com/rightjoin/rutl/conv"
 	"github.com/rightjoin/stak"
@@ -28,6 +31,7 @@ type endpoint struct {
 
 	standardHandler bool
 	usesAide        bool
+	fillStruct      bool
 
 	myCache    stak.Cache
 	myCacheDur time.Duration
@@ -92,6 +96,33 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 			}
 			return len(inv.inpSymbol) > 0 && inv.inpSymbol[len(inv.inpSymbol)-1] == aide // present at last index
 		}(),
+		fillStruct: func() bool {
+			ln := len(inv.inpSymbol)
+			if ln == 0 {
+				return false
+			}
+			// If last param is aide, then second last must be checked
+			// Otherwise last should be checked
+			hasAide := ln > 0 && inv.inpSymbol[ln-1] == aide
+			meth := fld.Type.String()[len("fuel")+1:]
+			loop := ln
+			if hasAide {
+				loop = ln - 1
+			}
+			for i := 0; i < loop; i++ {
+				if meth != "POST" && meth != "PUT" && strings.HasPrefix(inv.inpSymbol[i], "st:") {
+					panic("Struct can only be used with PUT and POST : " + seekMethod)
+				}
+			}
+
+			if hasAide {
+				if ln == 1 {
+					return false
+				}
+				return strings.HasPrefix(inv.inpSymbol[ln-2], "st:")
+			}
+			return strings.HasPrefix(inv.inpSymbol[ln-1], "st:")
+		}(),
 		mvcOptions: server._MvcOptions,
 		viewDir: func() string {
 			name := reflect.TypeOf(myparent).Elem().Name()
@@ -130,6 +161,9 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 		if out.usesAide {
 			count--
 		}
+		if out.fillStruct {
+			count--
+		}
 		if len(muxVars) != count {
 			title := fmt.Sprintf("%d inputs of url (%s) do not match %d of func:%s", len(muxVars), out.getURL(), count, seekMethod)
 			panic(title)
@@ -137,9 +171,17 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 	}
 
 	// function inputs should be supported type
-	var supp = []string{"int", "uint", "string", aide}
+	var supp = []string{"int", "uint", "string"}
 	if !out.standardHandler {
-		for _, inp := range out.inpSymbol {
+		ln := len(out.inpSymbol) - 1
+		if out.usesAide {
+			ln--
+		}
+		if out.fillStruct {
+			ln--
+		}
+		for i := 0; i <= ln; i++ {
+			inp := out.inpSymbol[i]
 			match := false
 			for _, sup := range supp {
 				if sup == inp {
@@ -169,7 +211,7 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 				panic("second output param must be error: " + seekMethod)
 			}
 		default:
-			panic("cannot have more than two return params: " + seekMethod)
+			panic("cannot have zero or more than two return params: " + seekMethod)
 		}
 	}
 
@@ -223,7 +265,7 @@ func (e *endpoint) uniqueURL() string {
 
 func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 
-	// stub::
+	// stub :
 	// parse file contents and serve it back
 	if e.Stub != "" {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -276,8 +318,41 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// do we need aide?
+		var ad = &Aide{Request: r, Response: w}
+		if e.fillStruct {
+			ln := len(e.inpType)
+			var t reflect.Type
+			if e.usesAide {
+				t = e.inpType[ln-2]
+			} else {
+				t = e.inpType[ln-1]
+			}
+			// fmt.Println(e.inpSymbol)
+			// fmt.Println(refl.Signature(t))
+			var p = reflect.New(t)
+			var addr = p.Interface()
+			buf, err := json.Marshal(ad.Post())
+			if err != nil {
+				writeItem(e, w, r, reflect.ValueOf(err))
+				return
+			}
+			// fmt.Println("Marshalled To:", string(buf))
+			err = json.Unmarshal(buf, addr)
+			if err != nil {
+				writeItem(e, w, r, reflect.ValueOf(err))
+				return
+			}
+			ok, err := govalidator.ValidateStruct(addr)
+			// fmt.Println(ok, err)
+			if !ok {
+				writeItem(e, w, r, reflect.ValueOf(err))
+				return
+			}
+			params = append(params, p.Elem().Interface())
+		}
+
 		if e.usesAide {
-			params = append(params, Aide{Request: r, Response: w})
+			params = append(params, ad)
 		}
 
 		var cacheOn = e.myCacheDur > 0 && r.Method == http.MethodGet

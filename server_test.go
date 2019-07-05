@@ -56,3 +56,26 @@ func TestDittooURLs(t *testing.T) {
 		s.loadEndpoints()
 	})
 }
+
+type serviceD struct {
+	Service
+	one   POST `route:"one"`
+	two   POST `route:"two"`
+	three POST `route:"three/{a}"`
+	four  POST `route:"four/{a}"`
+}
+
+type LoadMe struct {
+	Field string `json:"field"`
+}
+
+func (me serviceD) One(s LoadMe) string                  { return "im-one" }
+func (me serviceD) Two(s LoadMe, ad Aide) string         { return "im-two" }
+func (me serviceD) Three(a int, s LoadMe) string         { return "im-three" }
+func (me serviceD) Four(a int, s LoadMe, ad Aide) string { return "im-four" }
+
+func TestStructLoading(t *testing.T) {
+	s := NewServer()
+	s.AddService(&serviceD{})
+	s.RunTestInstance()
+}

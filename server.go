@@ -8,13 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/logrusorgru/aurora"
-
-	"github.com/unrolled/render"
-
 	"github.com/gorilla/mux"
+	"github.com/logrusorgru/aurora"
 	"github.com/rightjoin/rutl/conv"
 	"github.com/rightjoin/stak"
+	"github.com/unrolled/render"
 )
 
 const defaultPort = 8080
