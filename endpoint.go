@@ -352,7 +352,7 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 		}
 
 		if e.usesAide {
-			params = append(params, ad)
+			params = append(params, *ad)
 		}
 
 		var cacheOn = e.myCacheDur > 0 && r.Method == http.MethodGet
