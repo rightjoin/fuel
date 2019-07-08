@@ -17,7 +17,7 @@ type Aide struct {
 	// variables extracted from http request
 	query map[string]string
 	post  map[string]string
-	body  *string
+	body  []byte
 }
 
 func (a *Aide) Query() map[string]string {
@@ -65,10 +65,12 @@ func (a *Aide) Post() map[string]string {
 				a.post[k] = strings.Join(a.Request.PostForm[k], separator)
 			}
 		case strings.HasPrefix(contentType, "application/json"):
-			a.body = new(string)
-			*a.body = string(getBody(a.Request))
+			if a.body == nil {
+				a.body = getBody(a.Request)
+			}
+			var str = string(a.body)
 			jsn := make(map[string]interface{})
-			err := json.Unmarshal([]byte(*a.body), &jsn)
+			err := json.Unmarshal([]byte(str), &jsn)
 			if err == nil {
 				for key, data := range jsn {
 					if val, ok := data.(string); ok { // put string value directly
@@ -86,8 +88,7 @@ func (a *Aide) Post() map[string]string {
 			}
 		default:
 			fmt.Println("Unhandled Content Type:", contentType)
-			a.body = new(string)
-			*a.body = string(getBody(a.Request))
+			a.body = getBody(a.Request)
 		}
 
 		return a.post
@@ -101,6 +102,7 @@ func getBody(r *http.Request) []byte {
 	if err != nil {
 		panic(err)
 	}
+	//r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 	defer r.Body.Close()
 	return b
 }
