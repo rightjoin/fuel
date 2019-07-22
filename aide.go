@@ -1,6 +1,7 @@
 package fuel
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -102,7 +103,7 @@ func getBody(r *http.Request) []byte {
 	if err != nil {
 		panic(err)
 	}
-	//r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-	defer r.Body.Close()
+	r.Body.Close()
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 	return b
 }
