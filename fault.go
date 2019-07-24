@@ -9,9 +9,10 @@ import (
 var faultSymbol = typeSymbol(reflect.TypeOf(Fault{}))
 
 type Fault struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Inner   error  `json:"inner"`
+	HTTPCode int    `json:"http_code"`
+	ErrorNum int    `json:"error_num"`
+	Message  string `json:"message"`
+	Inner    error  `json:"inner"`
 }
 
 func (f Fault) Error() string {
@@ -31,7 +32,8 @@ func (f Fault) MarshalJSON() ([]byte, error) {
 	// TODO: buffered string
 
 	b := "{" +
-		fmt.Sprintf(`"code": %d,`, f.Code) +
+		// fmt.Sprintf(`"http_code": %d,`, f.HTTPCode) + No need to pass HTTP CODE to Clients
+		fmt.Sprintf(`"error_num": %d,`, f.ErrorNum) +
 		fmt.Sprintf(` "message": %s `, strconv.Quote(f.Message))
 
 	if f.Inner != nil {

@@ -456,22 +456,15 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		})
 	}
 
-	fmt.Println("writeItem()::symbol->", symbol)
+	fmt.Println("writeItem() symbol->>", symbol)
 	switch {
 	case symbol == faultSymbol:
 		f := item.Interface().(Fault)
 		httpStatus := http.StatusOK
-		if f.Code >= 400 && f.Code < 500 {
-			httpStatus = f.Code
+		if f.HTTPCode >= 400 && f.HTTPCode < 500 {
+			httpStatus = f.HTTPCode
 		} else {
-			switch r.Method {
-			case http.MethodGet:
-				// 404
-				httpStatus = http.StatusNotFound
-			default:
-				// 417
-				httpStatus = http.StatusExpectationFailed
-			}
+			httpStatus = http.StatusExpectationFailed
 		}
 		sendJSON(httpStatus)
 	case isError || (symbol == "i:.error"):
@@ -480,8 +473,11 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			writeItem(e, w, r, reflect.ValueOf(success))
 			return
 		}
-		f := Fault{Message: "An error occurred", Inner: item.Interface().(error)}
-		fmt.Println("wrapping error into fault:", f.Inner)
+		f, faulty := item.Interface().(Fault)
+		if !faulty {
+			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
+			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
+		}
 		writeItem(e, w, r, reflect.ValueOf(f))
 	case symbol == "string":
 		{
