@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/asaskevich/govalidator"
+	newrelic "github.com/newrelic/go-agent"
 
 	"github.com/rightjoin/rutl/conv"
 	"github.com/rightjoin/stak"
@@ -250,7 +251,13 @@ func (e *endpoint) setupMuxHandlers(server *Server) {
 		// processRequest function
 		fn := processRequest(e)
 		m.UseHandler(http.HandlerFunc(fn))
-		server.mux.Handle(e.getURL(), m).Methods(e.method())
+
+		if server.NewRelicApp != nil {
+			_, h := newrelic.WrapHandle(*server.NewRelicApp, e.getURL(), m.Handler())
+			server.mux.Handle(e.getURL(), h).Methods(e.method())
+		} else {
+			server.mux.Handle(e.getURL(), m).Methods(e.method())
+		}
 	}
 
 }

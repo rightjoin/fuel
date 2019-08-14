@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/logrusorgru/aurora"
+	newrelic "github.com/newrelic/go-agent"
 	"github.com/rightjoin/rutl/conv"
 	"github.com/rightjoin/stak"
 	"github.com/unrolled/render"
@@ -26,6 +27,9 @@ type Server struct {
 	endpoints map[string]endpoint
 	middle    map[string]func(http.Handler) http.Handler
 	caches    map[string]stak.Cache
+
+	// Support for new relic
+	NewRelicApp *newrelic.Application
 
 	_MvcOptions MvcOpts // hidden for now (NO MVC)
 }
