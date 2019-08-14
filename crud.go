@@ -101,9 +101,11 @@ func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.D
 		dbo = QueryDB(ad)
 	}
 
-	where := ad.Post()["where"]
+	body := ad.Post()
+	where := body["where"]
 	params := []interface{}{}
-	if paramsStr, ok := ad.Post()["params"]; ok {
+
+	if paramsStr, ok := body["params"]; ok {
 		err := json.Unmarshal([]byte(paramsStr), &params)
 		if err != nil {
 			return err
@@ -118,7 +120,26 @@ func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.D
 	}
 	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
-	return dbo.Where(where, params).Find(ptrArrModel).Error
+	// Pagination Size
+	sizeVal, ok := body[QPageSize]
+	size := conv.IntOr(sizeVal, 100)
+	if size == -1 { // if pagination size is -1, then retreive all records
+		size = count
+	}
+	ad.Response.Header().Set(HeaderPageSize, fmt.Sprintf("%d", size))
+
+	// Page Number (to retreive)
+	pageVal, ok := body[QPageNum]
+	if !ok {
+		pageVal = "1"
+	}
+	page := conv.IntOr(pageVal, 1)
+	ad.Response.Header().Set(HeaderPageNum, fmt.Sprintf("%d", page))
+
+	// Calculate Offset
+	offset := (page - 1) * size
+
+	return dbo.Where(where, params).Offset(offset).Limit(size).Find(ptrArrModel).Error
 }
 
 // QueryDB sets up how fule gets the underlying ORM
