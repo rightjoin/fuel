@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	bitbucket.org/rightjoin/ion v0.0.0-20180416091501-e8acdfa411da // indirect
-	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/azer/snakecase v1.0.0 // indirect
 	github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b
 	github.com/carbocation/handlers v0.0.0-20140528190747-c939c6d9ef31 // indirect
