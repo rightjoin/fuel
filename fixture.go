@@ -27,6 +27,11 @@ type Fixture struct {
 	Cache string
 	TTL   string
 
+	// Wrap stores whether the body should be wrapped
+	// in an enclosure automatically or not. Wrapping is done
+	// to make APIs mobile-app consumption friendly
+	Wrap string
+
 	// static files
 	Folder string
 }
@@ -52,6 +57,7 @@ func newFixture(tag reflect.StructTag) Fixture {
 		Cache:   read(tag, "cache"),
 		TTL:     read(tag, "ttl"),
 		Stub:    read(tag, "stub"),
+		Wrap:    read(tag, "wrap"),
 		Middleware: func() []string {
 			m := []string{}
 			list := strings.Split(read(tag, "middle", "middleware"), ",")
@@ -211,6 +217,19 @@ func (f Fixture) getTTL() string {
 
 	if value == "" && f.Parent != nil {
 		value = f.Parent.getTTL()
+	}
+
+	return value
+}
+
+func (f Fixture) getWrap() string {
+	value := f.Wrap
+	if value == ignored {
+		return ""
+	}
+
+	if value == "" && f.Parent != nil {
+		value = f.Parent.getWrap()
 	}
 
 	return value

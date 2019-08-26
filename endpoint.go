@@ -37,6 +37,8 @@ type endpoint struct {
 	myCache    stak.Cache
 	myCacheDur time.Duration
 
+	wrapperFn func() BodyWrap
+
 	mvcOptions MvcOpts
 	viewDir    string
 }
@@ -133,6 +135,7 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 			}
 			return snake
 		}(),
+		wrapperFn: server.ResponseFormat,
 	}
 
 	// caching ::
@@ -296,6 +299,12 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		// Do we need a wrapper?
+		var wrap BodyWrap
+		if e.Fixture.getWrap() == "true" && e.wrapperFn != nil {
+			wrap = e.wrapperFn()
+		}
+
 		// get the inputs that need to be passed to the underlying handler
 		params := make([]interface{}, 0)
 		if len(e.paramName) > 0 {
@@ -340,19 +349,19 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 			var addr = p.Interface()
 			buf, err := json.Marshal(ad.Post())
 			if err != nil {
-				writeItem(e, w, r, reflect.ValueOf(err))
+				writeItem(e, w, r, reflect.ValueOf(err), wrap)
 				return
 			}
 			// fmt.Println("Marshalled To:", string(buf))
 			err = json.Unmarshal(buf, addr)
 			if err != nil {
-				writeItem(e, w, r, reflect.ValueOf(err))
+				writeItem(e, w, r, reflect.ValueOf(err), wrap)
 				return
 			}
 			ok, err := govalidator.ValidateStruct(addr)
 			// fmt.Println(ok, err)
 			if !ok {
-				writeItem(e, w, r, reflect.ValueOf(err))
+				writeItem(e, w, r, reflect.ValueOf(err), wrap)
 				return
 			}
 			params = append(params, p.Elem().Interface())
@@ -387,28 +396,36 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
-		writeHTTP(e, w, r, outputs)
+		writeHTTP(e, w, r, outputs, wrap)
 	}
 }
 
-func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value) {
+func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value, wrap BodyWrap) {
 
 	if len(data) == 1 {
-		writeItem(e, w, r, data[0])
+		writeItem(e, w, r, data[0], wrap)
 	} else {
 		// Second parameter is type error.
 		// If it is NIL then all good, so
 		// process everything as normal.
 		// Otherwise process error.
 		if data[1].IsNil() {
-			writeItem(e, w, r, data[0])
+			writeItem(e, w, r, data[0], wrap)
 		} else {
-			writeItem(e, w, r, data[1])
+
+			// Set content
+			if !data[0].IsNil() {
+				if wrap != nil {
+					wrap.SetData(data[0].Interface())
+				}
+			}
+
+			writeItem(e, w, r, data[1], wrap)
 		}
 	}
 }
 
-func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect.Value) {
+func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect.Value, wrap BodyWrap) {
 
 	_, isError := item.Interface().(error)
 
@@ -420,7 +437,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 	runtimeType := item.Type()
 	if !isError && runtimeType.Kind() == reflect.Ptr {
 		fmt.Println("remove-indirection", typeSymbol(runtimeType))
-		writeItem(e, w, r, item.Elem())
+		writeItem(e, w, r, item.Elem(), wrap)
 		return
 	}
 
@@ -437,6 +454,19 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 		// TODO: error validation
 		rndr.JSON(w, sendStatus, item.Interface())
+	}
+
+	var sendJSONOf = func(data interface{}, status ...int) {
+
+		// If no status passed to func
+		// then use OK. Else used first value
+		sendStatus := http.StatusOK
+		if len(status) != 0 && status[0] != 0 {
+			sendStatus = status[0]
+		}
+
+		// TODO: error validation
+		rndr.JSON(w, sendStatus, data)
 	}
 
 	//helper function for view rendering
@@ -467,28 +497,51 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 	switch {
 	case symbol == faultSymbol:
 		f := item.Interface().(Fault)
-		httpStatus := http.StatusOK
-		if f.HTTPCode >= 400 && f.HTTPCode < 500 {
+		httpStatus := http.StatusExpectationFailed
+		if f.HTTPCode != 0 {
 			httpStatus = f.HTTPCode
-		} else {
-			httpStatus = http.StatusExpectationFailed
 		}
-		sendJSON(httpStatus)
+		if wrap == nil {
+			sendJSON(httpStatus)
+		} else {
+			wrap.SetFault(f)
+			sendJSONOf(wrap, httpStatus)
+		}
 	case isError || (symbol == "i:.error"):
 		if item.Interface() == nil {
-			success := map[string]interface{}{"success": 1}
-			writeItem(e, w, r, reflect.ValueOf(success))
+			if wrap == nil {
+				success := map[string]interface{}{"success": 1}
+				writeItem(e, w, r, reflect.ValueOf(success), wrap)
+			} else {
+				sendJSONOf(wrap)
+			}
 			return
 		}
 		f, faulty := item.Interface().(Fault)
+		if faulty && wrap != nil {
+			wrap.SetFault(f)
+		}
 		if !faulty {
+			if wrap != nil {
+				wrap.SetError(item.Interface().(error))
+			}
 			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
 			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
 		}
-		writeItem(e, w, r, reflect.ValueOf(f))
+		if wrap == nil {
+			writeItem(e, w, r, reflect.ValueOf(f), wrap)
+		} else {
+			sendJSONOf(wrap, f.HTTPCode)
+		}
 	case symbol == "string":
 		{
-			rndr.Text(w, http.StatusOK, item.Interface().(string))
+			if wrap == nil {
+				rndr.Text(w, http.StatusOK, item.Interface().(string))
+			} else {
+				wrap.SetData(item.Interface().(string))
+				sendJSONOf(wrap)
+			}
+
 			// data := item.Interface().(string)
 			// w.Header().Set("Content-Type", "text/plain")
 			// w.Header().Set("Content-Lenght", strconv.Itoa(len(data)))
@@ -496,15 +549,30 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		}
 	case symbol == "map":
 		// TODO: string -> interface{}
-		sendJSON()
+		if wrap == nil {
+			sendJSON()
+		} else {
+			wrap.SetData(item.Interface())
+			sendJSONOf(wrap)
+		}
 	case symbol == viewSymbol:
 		renderView()
 	case strings.HasPrefix(symbol, "st:"):
-		sendJSON()
+		if wrap == nil {
+			sendJSON()
+		} else {
+			wrap.SetData(item.Interface())
+			sendJSONOf(wrap)
+		}
 	case strings.HasPrefix(symbol, "sl:"):
-		sendJSON()
+		if wrap == nil {
+			sendJSON()
+		} else {
+			wrap.SetData(item.Interface())
+			sendJSONOf(wrap)
+		}
 	case symbol == "i:.":
-		writeItem(e, w, r, reflect.ValueOf(item.Interface()))
+		writeItem(e, w, r, reflect.ValueOf(item.Interface()), wrap)
 	default:
 		panic("unable to process: " + symbol)
 	}

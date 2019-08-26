@@ -27,9 +27,13 @@ type Server struct {
 	endpoints map[string]endpoint
 	middle    map[string]func(http.Handler) http.Handler
 	caches    map[string]stak.Cache
+	response  BodyWrap
 
 	// Support for new relic
 	NewRelicApp *newrelic.Application
+
+	//
+	ResponseFormat func() BodyWrap
 
 	_MvcOptions MvcOpts // hidden for now (NO MVC)
 }
@@ -49,6 +53,9 @@ func NewServer() Server {
 		endpoints:   make(map[string]endpoint),
 		caches:      make(map[string]stak.Cache, 0),
 		_MvcOptions: defaultMvcOpts(),
+		ResponseFormat: func() BodyWrap {
+			return &ApiResponse{}
+		},
 	}
 }
 
