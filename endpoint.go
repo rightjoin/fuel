@@ -302,7 +302,9 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 		// Do we need a wrapper?
 		var wrap BodyWrap
 		if e.Fixture.getWrap() == "true" && e.wrapperFn != nil {
-			wrap = e.wrapperFn()
+			if len(r.Header.Get("No-Wrap")) == 0 {
+				wrap = e.wrapperFn()
+			}
 		}
 
 		// get the inputs that need to be passed to the underlying handler
