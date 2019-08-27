@@ -15,6 +15,7 @@ type ApiResponse struct {
 type CodedError struct {
 	Code         int    `json:"code"`
 	ErrorMessage string `json:"error_message"`
+	DebugMessage string `json:"debug_message"`
 }
 
 func (c CodedError) Error() string {
@@ -43,5 +44,11 @@ func (api *ApiResponse) SetFault(f Fault) {
 	api.Errors = append(api.Errors, CodedError{
 		Code:         f.ErrorNum,
 		ErrorMessage: f.Message,
+		DebugMessage: func() string {
+			if f.Inner == nil {
+				return ""
+			}
+			return f.Inner.Error()
+		}(),
 	})
 }
