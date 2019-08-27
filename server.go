@@ -54,7 +54,7 @@ func NewServer() Server {
 		caches:      make(map[string]stak.Cache, 0),
 		_MvcOptions: defaultMvcOpts(),
 		ResponseFormat: func() BodyWrap {
-			return &ApiResponse{}
+			return &ApiResponse{Success: true}
 		},
 	}
 }
