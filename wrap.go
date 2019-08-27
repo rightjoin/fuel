@@ -15,8 +15,8 @@ type ApiResponse struct {
 }
 
 type CodedError struct {
-	Code         int
-	ErrorMessage string
+	Code         int    `json:"code"`
+	ErrorMessage string `json:"error_message"`
 }
 
 func (c CodedError) Error() string {
