@@ -534,6 +534,9 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
 		} else {
+			if f.HTTPCode == 0 {
+				f.HTTPCode = http.StatusExpectationFailed
+			}
 			sendJSONOf(wrap, f.HTTPCode)
 		}
 	case symbol == "string":
