@@ -29,6 +29,9 @@ type Server struct {
 	caches    map[string]stak.Cache
 	response  BodyWrap
 
+	// Custom health check
+	HealthChecks func() []HealthStatus
+
 	// Support for new relic
 	NewRelicApp *newrelic.Application
 
@@ -39,7 +42,7 @@ type Server struct {
 }
 
 func NewServer() Server {
-	return Server{
+	server := Server{
 		Server: http.Server{
 			ReadTimeout:  1 * time.Minute,
 			WriteTimeout: 1 * time.Minute,
@@ -57,6 +60,11 @@ func NewServer() Server {
 			return &ApiResponse{Success: true}
 		},
 	}
+
+	// Add health service
+	server.AddService(&HealthService{})
+
+	return server
 }
 
 func (s *Server) DefineMiddleware(name string, fn func(http.Handler) http.Handler) {
@@ -177,8 +185,13 @@ func (s *Server) loadEndpoints() {
 				spaces += " "
 			}
 			fmt.Println(spaces, aurora.Blue(epoint.method()), epoint.Fixture.getURL())
-		}
 
+			// if this is the health check service, then assign
+			// the additional checks function
+			if hSvc, ok := svc.(*HealthService); ok {
+				hSvc.HealthChecks = s.HealthChecks
+			}
+		}
 	}
 }
 
