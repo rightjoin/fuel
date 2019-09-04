@@ -121,7 +121,10 @@ func QueryHelper(modl interface{}, ptrArrModel interface{}, ad Aide, dbo *gorm.D
 	ad.Response.Header().Set(HeaderTotalRecords, fmt.Sprintf("%d", count))
 
 	// Pagination Size
-	sizeVal, ok := body[QPageSize]
+	sizeVal, pageSizeOK := body[QPageSize]
+	if !pageSizeOK {
+		return dbo.Where(where, params).Find(ptrArrModel).Error
+	}
 	size := conv.IntOr(sizeVal, 100)
 	if size == -1 { // if pagination size is -1, then retreive all records
 		size = count

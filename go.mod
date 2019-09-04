@@ -24,6 +24,7 @@ require (
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/meatballhat/negroni-logrus v0.0.0-20170801195057-31067281800f // indirect
 	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
+	github.com/newrelic/go-agent v2.11.0+incompatible
 	github.com/phyber/negroni-gzip v0.0.0-20180113114010-ef6356a5d029 // indirect
 	github.com/pmylund/go-cache v2.1.0+incompatible // indirect
 	github.com/rightjoin/dorm v0.0.0-20190531102100-a2edb12c8441
