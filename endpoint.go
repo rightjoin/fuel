@@ -302,7 +302,9 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 		// Do we need a wrapper?
 		var wrap BodyWrap
 		if e.Fixture.getWrap() == "true" && e.wrapperFn != nil {
-			wrap = e.wrapperFn()
+			if len(r.Header.Get("No-Wrap")) == 0 {
+				wrap = e.wrapperFn()
+			}
 		}
 
 		// get the inputs that need to be passed to the underlying handler
@@ -526,11 +528,15 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 				wrap.SetError(item.Interface().(error))
 			}
 			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
+			f.HTTPCode = http.StatusExpectationFailed
 			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
 		} else {
+			if f.HTTPCode == 0 {
+				f.HTTPCode = http.StatusExpectationFailed
+			}
 			sendJSONOf(wrap, f.HTTPCode)
 		}
 	case symbol == "string":

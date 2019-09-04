@@ -1,7 +1,5 @@
 package fuel
 
-import "fmt"
-
 type BodyWrap interface {
 	SetData(interface{})
 	SetError(error)
@@ -9,14 +7,15 @@ type BodyWrap interface {
 }
 
 type ApiResponse struct {
-	Data     interface{}  `json:"data"`
-	HasError bool         `json:"has_error"`
-	Errors   []CodedError `json:"errors"`
+	Data    interface{}  `json:"data"`
+	Success bool         `json:"success"`
+	Errors  []CodedError `json:"errors"`
 }
 
 type CodedError struct {
-	Code         int
-	ErrorMessage string
+	Code         int    `json:"code"`
+	ErrorMessage string `json:"error_message"`
+	DebugMessage string `json:"debug_message"`
 }
 
 func (c CodedError) Error() string {
@@ -28,26 +27,28 @@ func (api *ApiResponse) SetData(data interface{}) {
 }
 
 func (api *ApiResponse) SetError(e error) {
-	api.HasError = true
+	api.Success = false
 	if api.Errors == nil {
 		api.Errors = []CodedError{}
 	}
 	api.Errors = append(api.Errors, CodedError{
 		ErrorMessage: e.Error(),
 	})
-
-	fmt.Println("setting errors", api.Errors)
 }
 
 func (api *ApiResponse) SetFault(f Fault) {
-	api.HasError = true
+	api.Success = false
 	if api.Errors == nil {
 		api.Errors = []CodedError{}
 	}
 	api.Errors = append(api.Errors, CodedError{
 		Code:         f.ErrorNum,
 		ErrorMessage: f.Message,
+		DebugMessage: func() string {
+			if f.Inner == nil {
+				return ""
+			}
+			return f.Inner.Error()
+		}(),
 	})
-
-	fmt.Println("setting faults", api.Errors)
 }

@@ -130,10 +130,9 @@ func (f Fixture) getURL() string {
 		prefix = "/" + prefix
 	}
 
-	// if root == ignored {
-	// 	root = ""
-	// }
-	if root != "" {
+	if root == ignored {
+		root = ""
+	} else if root != "" {
 		root = "/" + root
 	}
 
