@@ -32,9 +32,9 @@ type Fixture struct {
 	// to make APIs mobile-app consumption friendly
 	Wrap string
 
-	// CustomError decides whether the returned error needs to be parsed into
-	//  a Fault (default-behaviour), or will be returned as it is.
-	CustomError string
+	// WrapError decides whether the returned error needs to be parsed into
+	// a Fault, or will be returned as it is(default behaviour).
+	WrapError string
 
 	// static files
 	Folder string
@@ -54,15 +54,15 @@ func newFixture(tag reflect.StructTag) Fixture {
 	}
 
 	return Fixture{
-		Prefix:      read(tag, "prefix", "pre"),
-		Root:        read(tag, "root"),
-		Route:       read(tag, "route"),
-		Version:     read(tag, "version", "ver", "v"),
-		Cache:       read(tag, "cache"),
-		TTL:         read(tag, "ttl"),
-		Stub:        read(tag, "stub"),
-		Wrap:        read(tag, "wrap"),
-		CustomError: read(tag, "custom-error"),
+		Prefix:    read(tag, "prefix", "pre"),
+		Root:      read(tag, "root"),
+		Route:     read(tag, "route"),
+		Version:   read(tag, "version", "ver", "v"),
+		Cache:     read(tag, "cache"),
+		TTL:       read(tag, "ttl"),
+		Stub:      read(tag, "stub"),
+		Wrap:      read(tag, "wrap"),
+		WrapError: read(tag, "wrap-error"),
 		Middleware: func() []string {
 			m := []string{}
 			list := strings.Split(read(tag, "middle", "middleware"), ",")
@@ -239,14 +239,14 @@ func (f Fixture) getWrap() string {
 	return value
 }
 
-func (f Fixture) getCustomError() string {
-	value := f.CustomError
+func (f Fixture) getWrapError() string {
+	value := f.WrapError
 	if value == ignored {
 		return ""
 	}
 
 	if value == "" && f.Parent != nil {
-		value = f.Parent.getCustomError()
+		value = f.Parent.getWrapError()
 	}
 
 	return value
