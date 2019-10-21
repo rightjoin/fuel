@@ -527,6 +527,23 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			if wrap != nil {
 				wrap.SetError(item.Interface().(error))
 			}
+
+			// Check for custom-err flag and avoid user-defined error's conversion to fault
+			if e.getCustomError() == "true" {
+				custHTTPCode := item.FieldByName("HTTPCode")
+				if custHTTPCode.IsValid() {
+					val, ok := custHTTPCode.Interface().(int)
+					if !ok {
+						sendJSON(http.StatusExpectationFailed)
+					} else {
+						sendJSON(val)
+					}
+				} else {
+					sendJSON(http.StatusExpectationFailed)
+				}
+				return
+			}
+
 			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
 			f.HTTPCode = http.StatusExpectationFailed
 			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
