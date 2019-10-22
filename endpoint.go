@@ -524,6 +524,24 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			wrap.SetFault(f)
 		}
 		if !faulty {
+
+			// Signifies a custom error, if wrap is nil, do not wrap it into a Fault
+			if item.Type().Kind() == reflect.Struct && wrap == nil {
+
+				customHTTPCode := item.FieldByName("HTTPCode")
+				if customHTTPCode.IsValid() {
+
+					val, ok := customHTTPCode.Interface().(int)
+					if ok {
+						sendJSON(val)
+						return
+					}
+				}
+
+				sendJSON(http.StatusExpectationFailed)
+				return
+			}
+
 			if wrap != nil {
 				wrap.SetError(item.Interface().(error))
 			}
