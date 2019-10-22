@@ -527,27 +527,9 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			if wrap != nil {
 				wrap.SetError(item.Interface().(error))
 			}
-
-			// Check for wrap-error flag and parse into fault
-			if e.getWrapError() == "true" {
-				f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
-				f.HTTPCode = http.StatusExpectationFailed
-				fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
-			} else {
-				custHTTPCode := item.FieldByName("HTTPCode")
-				if custHTTPCode.IsValid() {
-					val, ok := custHTTPCode.Interface().(int)
-					if !ok {
-						sendJSON(http.StatusExpectationFailed)
-					} else {
-						sendJSON(val)
-					}
-				} else {
-					sendJSON(http.StatusExpectationFailed)
-				}
-				return
-			}
-
+			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
+			f.HTTPCode = http.StatusExpectationFailed
+			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
