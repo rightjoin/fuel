@@ -211,7 +211,7 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 			if !acceptableOutput(inv.outSymbol[0]) {
 				panic("incorrect or unsupported output param in: " + seekMethod)
 			}
-			if inv.outSymbol[1] != "i:.error" {
+			if inv.outSymbol[1] != "i:.error" && !implementsError(inv.outType[1]) {
 				panic("second output param must be error: " + seekMethod)
 			}
 		default:
@@ -223,6 +223,17 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 	out.setupMuxHandlers(server)
 
 	return out
+}
+
+// implementsError checks whether a struct implements an error or not.
+func implementsError(typ reflect.Type) bool {
+	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
+
+	res := typ.Implements(errorInterface)
+
+	fmt.Println(typ.Kind())
+
+	return res
 }
 
 func (e *endpoint) setupMuxHandlers(server *Server) {
@@ -407,12 +418,23 @@ func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []refle
 	if len(data) == 1 {
 		writeItem(e, w, r, data[0], wrap)
 	} else {
-		// Second parameter is type error.
+		// Second parameter is type error or
+		// a struct that implements error.
 		// If it is NIL then all good, so
 		// process everything as normal.
 		// Otherwise process error.
-		if data[1].IsNil() {
+
+		typeZeroValue := reflect.Zero(data[1].Type()).Interface() == data[1].Interface()
+
+		if data[1].Kind() != reflect.Struct && data[1].IsNil() {
 			writeItem(e, w, r, data[0], wrap)
+		}
+
+		// In case of a custom error, if its a zero value,
+		// consider it equivalent to error == nil
+		if data[1].Kind() == reflect.Struct && typeZeroValue {
+			writeItem(e, w, r, data[0], wrap)
+
 		} else {
 
 			// Set content
@@ -525,9 +547,22 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 		}
 		if !faulty {
 
-			// Signifies a custom error, if wrap is nil, do not wrap it into a Fault
-			if item.Type().Kind() == reflect.Struct && wrap == nil {
+			if wrap != nil {
+				wrap.SetError(item.Interface().(error))
+			}
+			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
+			f.HTTPCode = http.StatusExpectationFailed
+			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
 
+			itemKind := item.Type().Kind()
+			
+			// Can't handle custom-error of kind interface,
+			// since distinguishing between a custom-error and an error
+			// is a tedious task.
+			if itemKind != reflect.Interface && wrap == nil {
+				if itemKind == reflect.Ptr {
+					item = item.Elem()
+				}
 				customHTTPCode := item.FieldByName("HTTPCode")
 				if customHTTPCode.IsValid() {
 
@@ -540,14 +575,6 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 				sendJSON(http.StatusExpectationFailed)
 				return
-			}
-
-			if wrap != nil {
-				wrap.SetError(item.Interface().(error))
-			}
-			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
-			f.HTTPCode = http.StatusExpectationFailed
-			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
