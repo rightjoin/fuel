@@ -412,7 +412,7 @@ func isNilError(data reflect.Value) bool {
 		data = data.Elem()
 	}
 
-	// Incase of nil
+	// Invoke IsNil only if the data is not an struct
 	if !data.IsValid() || (data.Kind() != reflect.Struct && data.IsNil()) {
 		return true
 	}
@@ -429,6 +429,12 @@ func isNilError(data reflect.Value) bool {
 func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value, wrap BodyWrap) {
 
 	if len(data) == 1 {
+		// Check if the only value being returned is also a zero value
+		if isNilError(data[0]) {
+			success := map[string]interface{}{"success": 1}
+			writeItem(e, w, r, reflect.ValueOf(success), wrap)
+			return
+		}
 		writeItem(e, w, r, data[0], wrap)
 	} else {
 		// Second parameter is type error or
@@ -548,23 +554,17 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			wrap.SetFault(f)
 		}
 		if !faulty {
-
-			if wrap != nil {
-				wrap.SetError(item.Interface().(error))
-			}
-			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
-			f.HTTPCode = http.StatusExpectationFailed
-			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
-
 			itemKind := item.Type().Kind()
-			
-			// Can't handle custom-error of kind interface,
+
+			// Handle Custom Errors.
+			// Note: Can't handle custom-error of kind interface,
 			// since distinguishing between a custom-error and an error (at runtime)
 			// is a tedious task.
 			if itemKind != reflect.Interface && wrap == nil {
 				if itemKind == reflect.Ptr {
 					item = item.Elem()
 				}
+
 				customHTTPCode := item.FieldByName("HTTPCode")
 				if customHTTPCode.IsValid() {
 
@@ -577,6 +577,15 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 				sendJSON(http.StatusExpectationFailed)
 				return
+			}
+
+			if wrap != nil {
+				wrap.SetError(item.Interface().(error))
+			}
+			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
+			f.HTTPCode = http.StatusExpectationFailed
+			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
+
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
