@@ -405,11 +405,19 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 // Checks whether the paased-in error type is equivalent to
 // error == nil.
 // Incase of custom-err struct, the passed in value can be
-// a zero-value struct
+// a zero-value struct.
 func isNilError(data reflect.Value) bool {
 	// remove indirection incase of a pointer
 	if data.Kind() == reflect.Ptr {
 		data = data.Elem()
+	}
+
+	// Incase of Arrays | Slices
+	if data.Kind() == reflect.Array || data.Kind() == reflect.Slice {
+		if data.Len() == 0 {
+			return true
+		}
+		return false
 	}
 
 	// Invoke IsNil only if the data is not an struct
@@ -429,6 +437,7 @@ func isNilError(data reflect.Value) bool {
 func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value, wrap BodyWrap) {
 
 	if len(data) == 1 {
+
 		// Check if the only value being returned is also a zero value
 		if isNilError(data[0]) {
 			success := map[string]interface{}{"success": 1}
@@ -436,25 +445,27 @@ func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []refle
 			return
 		}
 		writeItem(e, w, r, data[0], wrap)
-	} else {
-		// Second parameter is type error or
-		// a struct that implements error.
-		// If it is NIL then all good, so
-		// process everything as normal.
-		// Otherwise process error.
-
-		switch {
-		case isNilError(data[1]):
-			writeItem(e, w, r, data[0], wrap)
-		default:
-			if !data[0].IsNil() {
-				if wrap != nil {
-					wrap.SetData(data[0].Interface())
-				}
-			}
-			writeItem(e, w, r, data[1], wrap)
-		}
+		return
 	}
+
+	// Second parameter is type error or
+	// a struct that implements error.
+	// If it is NIL then all good, so
+	// process everything as normal.
+	// Otherwise process error.
+
+	switch {
+	case isNilError(data[1]):
+		writeItem(e, w, r, data[0], wrap)
+	default:
+		if !data[0].IsNil() {
+			if wrap != nil {
+				wrap.SetData(data[0].Interface())
+			}
+		}
+		writeItem(e, w, r, data[1], wrap)
+	}
+
 }
 
 func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect.Value, wrap BodyWrap) {
