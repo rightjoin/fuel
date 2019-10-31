@@ -211,7 +211,7 @@ func newEndpoint(fix Fixture, myparent serviceComposite, fld reflect.StructField
 			if !acceptableOutput(inv.outSymbol[0]) {
 				panic("incorrect or unsupported output param in: " + seekMethod)
 			}
-			if inv.outSymbol[1] != "i:.error" {
+			if inv.outSymbol[1] != "i:.error" && !(inv.outType[1].Implements(reflect.TypeOf((*error)(nil)).Elem())) {
 				panic("second output param must be error: " + seekMethod)
 			}
 		default:
@@ -402,29 +402,70 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// Checks whether the paased-in error type is equivalent to
+// error == nil.
+// Incase of custom-err struct, the passed in value can be
+// a zero-value struct.
+func isNilError(data reflect.Value) bool {
+	// remove indirection incase of a pointer
+	if data.Kind() == reflect.Ptr {
+		data = data.Elem()
+	}
+
+	// Incase of Arrays | Slices
+	if data.Kind() == reflect.Array || data.Kind() == reflect.Slice {
+		if data.Len() == 0 {
+			return true
+		}
+		return false
+	}
+
+	// Invoke IsNil only if the data is not an struct
+	if !data.IsValid() || (data.Kind() != reflect.Struct && data.IsNil()) {
+		return true
+	}
+
+	// Struct's zero value
+	isZero := (reflect.Zero(data.Type()).Interface() == data.Interface())
+	if isZero {
+		return true
+	}
+
+	return false
+}
+
 func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []reflect.Value, wrap BodyWrap) {
 
 	if len(data) == 1 {
-		writeItem(e, w, r, data[0], wrap)
-	} else {
-		// Second parameter is type error.
-		// If it is NIL then all good, so
-		// process everything as normal.
-		// Otherwise process error.
-		if data[1].IsNil() {
-			writeItem(e, w, r, data[0], wrap)
-		} else {
 
-			// Set content
-			if !data[0].IsNil() {
-				if wrap != nil {
-					wrap.SetData(data[0].Interface())
-				}
-			}
-
-			writeItem(e, w, r, data[1], wrap)
+		// Check if the only value being returned is also a zero value
+		if isNilError(data[0]) {
+			success := map[string]interface{}{"success": 1}
+			writeItem(e, w, r, reflect.ValueOf(success), wrap)
+			return
 		}
+		writeItem(e, w, r, data[0], wrap)
+		return
 	}
+
+	// Second parameter is type error or
+	// a struct that implements error.
+	// If it is NIL then all good, so
+	// process everything as normal.
+	// Otherwise process error.
+
+	switch {
+	case isNilError(data[1]):
+		writeItem(e, w, r, data[0], wrap)
+	default:
+		if !data[0].IsNil() {
+			if wrap != nil {
+				wrap.SetData(data[0].Interface())
+			}
+		}
+		writeItem(e, w, r, data[1], wrap)
+	}
+
 }
 
 func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect.Value, wrap BodyWrap) {
@@ -524,12 +565,38 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			wrap.SetFault(f)
 		}
 		if !faulty {
+			itemKind := item.Type().Kind()
+
+			// Handle Custom Errors.
+			// Note: Can't handle custom-error of kind interface,
+			// since distinguishing between a custom-error and an error (at runtime)
+			// is a tedious task.
+			if itemKind != reflect.Interface && wrap == nil {
+				if itemKind == reflect.Ptr {
+					item = item.Elem()
+				}
+
+				customHTTPCode := item.FieldByName("HTTPCode")
+				if customHTTPCode.IsValid() {
+
+					val, ok := customHTTPCode.Interface().(int)
+					if ok {
+						sendJSON(val)
+						return
+					}
+				}
+
+				sendJSON(http.StatusExpectationFailed)
+				return
+			}
+
 			if wrap != nil {
 				wrap.SetError(item.Interface().(error))
 			}
 			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
 			f.HTTPCode = http.StatusExpectationFailed
 			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
+
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
