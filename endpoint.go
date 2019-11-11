@@ -421,7 +421,7 @@ func isNilError(data reflect.Value) bool {
 	}
 
 	// Invoke IsNil only if the data is not an struct
-	if !data.IsValid() || (data.Kind() != reflect.Struct && data.IsNil()) {
+	if !data.IsValid() || (data.Kind() != reflect.Struct && data.Kind() != reflect.String && data.IsNil()) {
 		return true
 	}
 
@@ -454,11 +454,18 @@ func writeHTTP(e *endpoint, w http.ResponseWriter, r *http.Request, data []refle
 	// process everything as normal.
 	// Otherwise process error.
 
+	// Types on which isNil() cannot be called
+	isTypeToIgnore := data[0].Kind() == reflect.Struct || data[0].Kind() == reflect.String
+
 	switch {
+	// Case to handle cases where both the result and error is nil
+	case (!isTypeToIgnore && data[0].IsNil()) && isNilError(data[1]):
+		success := map[string]interface{}{"success": 1}
+		writeItem(e, w, r, reflect.ValueOf(success), wrap)
 	case isNilError(data[1]):
 		writeItem(e, w, r, data[0], wrap)
 	default:
-		if !data[0].IsNil() {
+		if isTypeToIgnore || !data[0].IsNil() {
 			if wrap != nil {
 				wrap.SetData(data[0].Interface())
 			}
