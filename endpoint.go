@@ -587,7 +587,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 				if customHTTPCode.IsValid() {
 
 					val, ok := customHTTPCode.Interface().(int)
-					if ok {
+					if ok && val != 0 {
 						sendJSON(val)
 						return
 					}
