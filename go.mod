@@ -27,6 +27,7 @@ require (
 	github.com/rightjoin/log15 v0.0.0-20170202204638-998d73e2850a // indirect
 	github.com/rightjoin/rutl v0.0.0-20190429034327-6ccca6b49792
 	github.com/rightjoin/stak v0.0.0-20180921192257-6d1d77c1b652
+	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/unrolled/render v1.0.0
 	github.com/urfave/negroni v1.0.0 // indirect
