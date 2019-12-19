@@ -2,6 +2,7 @@ package fuel
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/rightjoin/dorm"
@@ -15,9 +16,9 @@ type HealthService struct {
 	check GET `route:"health-check" middleware:"-" cache:"-" ttl:"-" wrap:"true"`
 }
 
-func (h *HealthService) Check() ([]HealthStatus, error) {
+func (h *HealthService) Check() (out []HealthStatus, err error) {
 
-	out := make([]HealthStatus, 0)
+	defer Recover(&out, &err)
 
 	checks := fig.StringSliceOr(nil, "auto-heath-check")
 	if checks != nil {
@@ -57,7 +58,7 @@ func (h *HealthService) Check() ([]HealthStatus, error) {
 	}
 
 	// Is there any error?
-	var err error = nil
+
 	for _, h := range out {
 		if h.Success == false {
 			msg := h.Name
@@ -70,6 +71,30 @@ func (h *HealthService) Check() ([]HealthStatus, error) {
 	}
 
 	return out, err
+}
+
+// Recover will handle any panic.
+func Recover(h *[]HealthStatus, errors *error) {
+
+	var err error
+	if r := recover(); r != nil {
+		if err1, ok := r.(error); ok {
+
+			err = err1
+		}
+		if err == nil {
+			err = fmt.Errorf("%v", r)
+		}
+
+		*h = append(*h, HealthStatus{
+			Name:     "Health-Check Service",
+			Success:  false,
+			Message:  "Cannot establish connection to db",
+			TestedAt: time.Now(),
+		})
+		errors = &err
+	}
+
 }
 
 type HealthStatus struct {
