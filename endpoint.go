@@ -23,6 +23,8 @@ import (
 
 var cacheWriter = serializer{}
 
+var RegisteredErrorTypes = []reflect.Type{}
+
 type endpoint struct {
 	Fixture
 	parent serviceComposite
@@ -572,17 +574,14 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			wrap.SetFault(f)
 		}
 		if !faulty {
-			itemKind := reflect.TypeOf(item).Kind()
+			itemKind := item.Kind()
+			for ; itemKind == reflect.Ptr; itemKind = item.Kind() {
+				item = item.Elem()
+			}
+			realValue := reflect.ValueOf(item.Interface())
 
-			// Handle Custom Errors.
-			// Note: Can't handle custom-error of kind interface,
-			// since distinguishing between a custom-error and an error (at runtime)
-			// is a tedious task.
-			if itemKind != reflect.Interface && wrap == nil {
-				if itemKind == reflect.Ptr {
-					item = item.Elem()
-				}
-
+			if isRegisteredErrorType(realValue.Type()) {
+				item = realValue
 				customHTTPCode := reflect.ValueOf(item.Interface()).FieldByName("HTTPCode")
 				if customHTTPCode.IsValid() {
 					val, ok := customHTTPCode.Interface().(int)
@@ -599,7 +598,6 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 						return
 					}
 				}
-
 				sendJSON(http.StatusExpectationFailed)
 				return
 			}
@@ -610,7 +608,6 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			f = Fault{Message: "An error occurred", Inner: item.Interface().(error), ErrorNum: 9999}
 			f.HTTPCode = http.StatusExpectationFailed
 			fmt.Println("wrapping error into fault:", f.Inner, "; and outer =>", f)
-
 		}
 		if wrap == nil {
 			writeItem(e, w, r, reflect.ValueOf(f), wrap)
@@ -663,4 +660,13 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 	default:
 		panic("unable to process: " + symbol)
 	}
+}
+
+func isRegisteredErrorType(rt reflect.Type) bool {
+	for i := 0; i < len(RegisteredErrorTypes); i++ {
+		if rt == RegisteredErrorTypes[i] {
+			return true
+		}
+	}
+	return false
 }
