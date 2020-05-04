@@ -572,7 +572,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 			wrap.SetFault(f)
 		}
 		if !faulty {
-			itemKind := item.Type().Kind()
+			itemKind := reflect.TypeOf(item).Kind()
 
 			// Handle Custom Errors.
 			// Note: Can't handle custom-error of kind interface,
@@ -583,7 +583,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 					item = item.Elem()
 				}
 
-				customHTTPCode := item.FieldByName("HTTPCode")
+				customHTTPCode := reflect.ValueOf(item.Interface()).FieldByName("HTTPCode")
 				if customHTTPCode.IsValid() {
 					val, ok := customHTTPCode.Interface().(int)
 					if ok && val != 0 {
@@ -591,7 +591,7 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 						return
 					}
 				}
-				customHTTPCode = item.FieldByName("HttpCode")
+				customHTTPCode = reflect.ValueOf(item.Interface()).FieldByName("HttpCode")
 				if customHTTPCode.IsValid() {
 					val, ok := customHTTPCode.Interface().(int)
 					if ok && val != 0 {
