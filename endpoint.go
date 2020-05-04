@@ -402,7 +402,7 @@ func processRequest(e *endpoint) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-// Checks whether the paased-in error type is equivalent to
+// Checks whether the passed-in error type is equivalent to
 // error == nil.
 // Incase of custom-err struct, the passed in value can be
 // a zero-value struct.
@@ -585,7 +585,14 @@ func writeItem(e *endpoint, w http.ResponseWriter, r *http.Request, item reflect
 
 				customHTTPCode := item.FieldByName("HTTPCode")
 				if customHTTPCode.IsValid() {
-
+					val, ok := customHTTPCode.Interface().(int)
+					if ok && val != 0 {
+						sendJSON(val)
+						return
+					}
+				}
+				customHTTPCode = item.FieldByName("HttpCode")
+				if customHTTPCode.IsValid() {
 					val, ok := customHTTPCode.Interface().(int)
 					if ok && val != 0 {
 						sendJSON(val)
