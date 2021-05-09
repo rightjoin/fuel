@@ -20,7 +20,15 @@ func (h *HealthService) Check() (out []HealthStatus, err error) {
 
 	defer Recover(&out, &err)
 
-	checks := fig.StringSliceOr(nil, "auto-heath-check")
+	// Support both 'health-checks' and older 'auto-heath-check'
+	var checks = []string{}
+	{
+		checks = fig.StringSliceOr(nil, "auto-heath-check")
+		if checks == nil {
+			checks = fig.StringSliceOr(nil, "health-checks")
+		}
+	}
+
 	if checks != nil {
 		for _, config := range checks {
 			engine := fig.String(config, "engine")
